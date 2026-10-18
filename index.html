@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Ajedrez Garabato</title>
+  <meta name="description" content="Ajedrez para jugar en familia, dibujado a pluma sobre una hoja de libreta.">
+  <meta name="theme-color" content="#f1ebdc">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Garabato">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="preload" href="fonts/patrick-hand.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/paper.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <svg id="doodles" aria-hidden="true"></svg>
+
+  <!-- MENÚ -->
+  <main id="menu" class="screen">
+    <h1 class="title">Ajedrez <span>Garabato</span></h1>
+    <div class="hero" aria-hidden="true"></div>
+    <div class="stack">
+      <button class="btn big" data-go="resume" hidden>Seguir partida <small id="resume-info"></small></button>
+      <button class="btn big" data-go="bot">Jugar contra el bot</button>
+      <button class="btn big red" data-go="pair">Jugar en pareja</button>
+      <button class="btn" data-go="learn">Aprender a mover</button>
+    </div>
+    <button class="btn small ghost" data-act="sound"></button>
+  </main>
+
+  <!-- OPCIONES DE PARTIDA -->
+  <section id="setup" class="screen" hidden>
+    <h2 id="setup-title">Contra el bot</h2>
+    <div class="opt bot-only">
+      <p>¿Qué tan difícil?</p>
+      <div class="seg" data-opt="level">
+        <button data-val="1" data-art="p">Fácil</button>
+        <button data-val="2" data-art="n">Medio</button>
+        <button data-val="3" data-art="k">Difícil</button>
+      </div>
+    </div>
+    <div class="opt bot-only">
+      <p>¿Con qué color juegas?</p>
+      <div class="seg" data-opt="color">
+        <button data-val="w" class="ink-w">Azul <small>empieza</small></button>
+        <button data-val="b" class="ink-b">Rojo</button>
+        <button data-val="r">Sorpresa</button>
+      </div>
+    </div>
+    <div class="opt">
+      <p>Ayudas</p>
+      <div class="seg" data-opt="helps">
+        <button data-val="muchas">Muchas <small>5–7 años</small></button>
+        <button data-val="algunas">Algunas <small>8–10</small></button>
+        <button data-val="pocas">Pocas <small>11+</small></button>
+      </div>
+      <p class="note" id="helps-note"></p>
+    </div>
+    <div class="opt pair-only">
+      <p>Tablero</p>
+      <div class="seg" data-opt="spin">
+        <button data-val="0">Quieto</button>
+        <button data-val="1">Girar en cada turno</button>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn ghost" data-go="menu"><i data-icon="back"></i> Volver</button>
+      <button class="btn big" data-act="start">¡A jugar!</button>
+    </div>
+  </section>
+
+  <!-- PARTIDA -->
+  <section id="game" class="screen" hidden>
+    <header class="topbar">
+      <button class="btn icon" data-go="menu" aria-label="Menú"><i data-icon="menu"></i></button>
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+      <button class="btn icon" data-act="sound" aria-label="Sonido"></button>
+    </header>
+    <div class="arena">
+      <div class="player" id="p-top"></div>
+      <div class="board-wrap"><svg id="board" class="board" role="img" aria-label="Tablero de ajedrez"></svg></div>
+      <div class="player" id="p-bottom"></div>
+    </div>
+    <nav class="controls">
+      <button class="btn" data-act="undo"><i data-icon="undo"></i> <span>Deshacer</span></button>
+      <button class="btn" data-act="hint"><i data-icon="bulb"></i> <span>Pista</span></button>
+      <button class="btn" data-act="flip"><i data-icon="flip"></i> <span>Girar</span></button>
+      <button class="btn red" data-act="again" hidden><i data-icon="again"></i> <span>Otra vez</span></button>
+    </nav>
+  </section>
+
+  <!-- APRENDER -->
+  <section id="learn" class="screen" hidden>
+    <header class="topbar">
+      <button class="btn icon" data-go="menu" aria-label="Volver al menú"><i data-icon="back"></i></button>
+      <h2>Aprender a mover</h2>
+      <span class="icon-spacer"></span>
+    </header>
+    <div id="lessons" class="lessons"></div>
+  </section>
+
+  <section id="lesson" class="screen" hidden>
+    <header class="topbar">
+      <button class="btn icon" data-act="lessons" aria-label="Volver a las lecciones"><i data-icon="back"></i></button>
+      <h2 id="lesson-title"></h2>
+      <span class="icon-spacer"></span>
+    </header>
+    <p id="lesson-text" class="lesson-text"></p>
+    <div class="board-wrap"><svg id="lesson-board" class="board" role="img" aria-label="Tablero de práctica"></svg></div>
+    <p id="lesson-msg" class="lesson-msg" role="status" aria-live="polite"></p>
+    <nav class="controls">
+      <button class="btn" data-act="lesson-reset"><i data-icon="again"></i> <span>Otra vez</span></button>
+      <button class="btn red" data-act="lesson-next">Siguiente</button>
+    </nav>
+  </section>
+
+  <!-- DIÁLOGO (fin de partida, coronación) -->
+  <div id="dialog" class="overlay" hidden>
+    <div class="card" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+      <div class="dlg-art"></div>
+      <h2 id="dlg-title"></h2>
+      <p id="dlg-text"></p>
+      <div class="dlg-btns"></div>
+    </div>
+  </div>
+</body>
+</html>
