@@ -45,12 +45,26 @@
         <span class="mode-txt"><b>Aprender a mover</b><small>12 lecciones cortitas</small></span>
       </button>
     </nav>
-    <div class="audio-toggles" role="group" aria-label="Sonido">
-      <button class="btn ghost" data-act="fx"></button>
-      <button class="btn ghost" data-act="voice"></button>
-      <button class="btn ghost" data-act="music"></button>
+    <div class="menu-foot">
+      <button class="btn theme-btn" data-go="themes"><span class="theme-mini"></span><span>Personajes</span></button>
+      <div class="audio-toggles" role="group" aria-label="Sonido">
+        <button class="btn ghost" data-act="fx"></button>
+        <button class="btn ghost" data-act="voice"></button>
+        <button class="btn ghost" data-act="music"></button>
+      </div>
     </div>
   </main>
+
+  <!-- PERSONAJES (tema) -->
+  <section id="themes" class="screen" hidden>
+    <header class="topbar">
+      <button class="btn icon" data-go="menu" aria-label="Volver al menú"><i data-icon="back"></i></button>
+      <h2>Personajes</h2>
+      <span class="icon-spacer"></span>
+    </header>
+    <p class="lesson-text">¿Con quiénes quieres jugar? Toca un equipo.</p>
+    <div id="theme-list" class="theme-list"></div>
+  </section>
 
   <!-- OPCIONES DE PARTIDA -->
   <section id="setup" class="screen" hidden>

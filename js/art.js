@@ -13,13 +13,18 @@ import { BOSQUE, MAR } from './animals.js';
 // ---------- piezas: cada parte = [path o fn(r), relleno, grosor] ----------
 // rellenos: t = tinta clara del bando, i = tinta, p = papel, n = sin relleno
 const PIECES = {
-  p: { // renacuajo
+  p: { // ranita: patas traseras dobladas, pancita clara, ojos saltones
     parts: [
-      ['M62 60C70 52 70 44 80 37C84 34 89 32 92 27C91 38 84 41 79 47C74 53 76 62 66 68Z', 't', 3.2],
-      [r => blob(48, 65, 22, 20, r, 0.04), 't', 3.4],
-      ['M38 83Q36 90 31 90M57 84Q59 90 64 90', 'n', 2.8],
+      ['M31 72C20 70 17 83 25 88C30 91 37 88 39 83Z', 't', 2.8],
+      ['M69 72C80 70 83 83 75 88C70 91 63 88 61 83Z', 't', 2.8],
+      ['M25 88L19 90M27 89L23 93M31 89L30 93M75 88L81 90M73 89L77 93M69 89L70 93', 'n', 2.2],
+      [r => blob(50, 68, 21, 17, r, 0.04), 't', 3.2],
+      [r => blob(50, 78, 10, 6, r, 0.05), 'p', 1.8],
+      ['M43 82L42 90M42 90L38 91M42 90L45 92M57 82L58 90M58 90L55 92M58 90L62 91', 'n', 2.4],
+      [r => blob(40, 51, 8, 7.5, r, 0.05) + blob(60, 51, 8, 7.5, r, 0.05), 'p', 2.8],
+      [dots([[33, 65], [67, 64], [60, 60], [38, 59]]), 'n', 3],
     ],
-    face: { eyes: [[41, 61], [55, 61]], mouth: [48, 71], s: 1 },
+    face: { eyes: [[40, 52], [60, 52]], mouth: [50, 63], s: 1.35 },
   },
   r: { // castillo de arena
     parts: [

@@ -10,9 +10,9 @@ Ajedrez para jugar en familia, dibujado a pluma sobre una hoja de libreta. Funci
 - **En pareja** en el mismo dispositivo, con opción de girar el tablero en cada turno.
 - **Ayudas por edad**: muchas (5–7: ves los movimientos, las piezas se asustan si están en peligro, deshacer y pistas sin límite), algunas (8–10: 3 deshacer y 3 pistas), pocas (11+).
 - **Aprender a mover**: una lección por pieza ("cómete los renacuajos rojos") y reglas especiales: jaque, jaque mate, enroque, coronar y al paso.
-- Tres juegos de piezas-personaje (se eligen en las opciones):
-  - **Garabato**: renacuajo, castillo de arena, mago, caballito, flor con corona y sol con bigote.
-  - **Bosque**: pollito con casco de cascarón, caballito con paliacate, búho con mitra, tortuga que carga un castillo, abeja reina y león con capa.
+- **Personajes** (menú → Personajes): tres temas para personalizar el juego; cada uno trae sus dibujos, sus lecciones y la voz de Lápiz nombrando a sus personajes:
+  - **Garabato**: ranita, castillo de arena, mago, caballito, flor con corona y sol con bigote.
+  - **Bosque**: pollito con casco de cascarón, pony con mantita, búho con mitra, tortuga que carga un castillo, abeja reina y león con capa.
   - **Mar**: pececito, caballito de mar, pulpo mago, cangrejo ermitaño con concha-castillo, estrella de mar reina y morsa rey.
 - Las piezas están vivas: tiemblan como dibujo, parpadean, miran a los lados, dan brinquitos, tiemblan de miedo, dicen "no" con la cabeza si la jugada no vale, se aplastan al aterrizar, echan destellos al coronar y el equipo ganador festeja.
 - **Lápiz**, la mascota, habla (voz en español mexicano): lee las lecciones, avisa jaque, explica por qué una jugada no vale, festeja al ganar y da pistas si lo tocas.

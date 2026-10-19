@@ -85,7 +85,25 @@ function paintArt() {
     if (!slot) { el.insertAdjacentHTML('afterbegin', '<span class="art-slot"></span>'); slot = el.querySelector(':scope > .art-slot'); }
     slot.innerHTML = svg;
   }
+  $('.theme-mini').innerHTML = pieceSVG('k', 'w') + pieceSVG('q', 'b');
   $('.hero').innerHTML = pieceSVG('k', 'w', 'happy') + `<button class="lapiz-btn hero-lapiz" data-act="lapiz" aria-label="Lápiz te saluda">${lapizSVG('happy')}</button>` + pieceSVG('q', 'b', 'happy');
+}
+
+// personalización: cada tema trae sus personajes, sus lecciones y su voz
+function paintThemes() {
+  const row = (k, c) => `<span class="theme-row">${[...'kqrbnp'].map(t => pieceSVG(t, c, 'idle', k)).join('')}</span>`;
+  $('#theme-list').innerHTML = Object.entries(SETS).map(([k, S]) =>
+    `<button class="btn theme-card${k === store.opts.set ? ' hi' : ''}" data-theme="${k}" aria-pressed="${k === store.opts.set}"><b>${S.name}</b>${row(k, 'w')}${row(k, 'b')}</button>`).join('');
+}
+function chooseTheme(k) {
+  store.opts.set = k;
+  setPieceSet(k);
+  save();
+  paintArt();
+  paintThemes();
+  paintSetup();
+  sound.play('promote');
+  sound.say(`tema_${k}`);
 }
 
 function paintSetup() {
@@ -241,13 +259,17 @@ function play(m, dragged = false) {
 }
 
 // ---------- bot (Web Worker) ----------
-let worker = null, reqId = 0;
+// si el navegador no deja usar el Worker (iPad viejo, hosting raro), el bot piensa aquí mismo
+let worker = null, reqId = 0, noWorker = false;
+const thinkHere = (id, moves, level) => import('./bot.js').then(m => new Promise(res => setTimeout(() => res({ id, ...m.think(moves, level) }), 30)));
 function askBot(level) {
-  worker ??= new Worker(new URL('./bot.js', import.meta.url), { type: 'module' });
-  const id = ++reqId;
+  const id = ++reqId, moves = G.moves.slice();
+  if (!noWorker) try { worker ??= new Worker(new URL('./bot.js', import.meta.url), { type: 'module' }); } catch { noWorker = true; }
+  if (noWorker) return thinkHere(id, moves, level);
   return new Promise(res => {
     worker.onmessage = ({ data }) => data.id === id && res(data);
-    worker.postMessage({ id, moves: G.moves, level });
+    worker.onerror = () => { noWorker = true; worker = null; thinkHere(id, moves, level).then(res); };
+    worker.postMessage({ id, moves, level });
   });
 }
 
@@ -549,10 +571,12 @@ document.addEventListener('click', e => {
   else if (go === 'resume') loadGame(store.game);
   else if (go === 'bot' || go === 'pair') openSetup(go);
   else if (go === 'learn') learn.open();
+  else if (go === 'themes') { paintThemes(); show('themes'); }
+  if (b.dataset.theme) chooseTheme(b.dataset.theme);
   if (b.dataset.act) actions[b.dataset.act]?.();
   if (seg) {
     store.opts[seg.dataset.opt] = b.dataset.val;
-    if (seg.dataset.opt === 'set') { setPieceSet(b.dataset.val); paintArt(); }
+    if (seg.dataset.opt === 'set') { setPieceSet(b.dataset.val); paintArt(); sound.say(`tema_${b.dataset.val}`); }
     save(); paintSetup(); sound.play('select');
   }
 });

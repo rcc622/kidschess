@@ -1,11 +1,11 @@
-// "Aprender a mover": una lección por pieza (cómete los renacuajos rojos) + reglas especiales.
+// "Aprender a mover": una lección por pieza (cómete a los rojos) + reglas especiales.
 import { Chess } from './chess.js';
 import { createBoard } from './board.js';
-import { pieceSVG } from './art.js';
+import { pieceSVG, pieceSet } from './art.js';
 
 const LESSONS = [
   { art: 'p', title: 'El peón', goal: 'eat', fen: '8/8/8/8/2p5/3p4/4P3/8 w - - 0 1',
-    text: 'El renacuajo camina derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal! Cómete a los rojos.' },
+    text: 'La ranita brinca derecho, de una en una. En su primer brinco puede avanzar dos. ¡Pero come en diagonal! Cómete a los rojos.' },
   { art: 'r', title: 'La torre', goal: 'eat', fen: '8/8/p4p2/8/8/8/5p2/R7 w - - 0 1',
     text: 'El castillo corre en línea recta: adelante, atrás y a los lados, todas las casillas que quiera. Cómete a los rojos.' },
   { art: 'b', title: 'El alfil', goal: 'eat', fen: '8/8/7p/8/1p3p2/8/8/2B5 w - - 0 1',
@@ -29,6 +29,29 @@ const LESSONS = [
   { art: 'p', title: 'Al paso', goal: 'ep', fen: '8/8/8/3pP3/8/8/8/8 w - d6 0 1', special: true,
     text: 'Truco secreto: el peón rojo acaba de avanzar dos casillas y quedó junto al tuyo. Puedes comerlo "al paso", como si solo hubiera avanzado una. ¡Solo en ese mismo turno!' },
 ];
+
+// las lecciones de cada pieza nombran a los personajes del tema elegido (y Lápiz las lee con su audio)
+const THEMED = {
+  bosque: [
+    'El pollito camina derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal! Cómete a los rojos.',
+    'La tortuga carga su castillo en línea recta: adelante, atrás y a los lados, todas las casillas que quiera. Cómete a los rojos.',
+    'El búho vuela en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color! Cómete a los rojos.',
+    null, // el caballito es igual que en Garabato
+    'La abeja reina es la más poderosa: vuela como torre y como alfil juntos. Cómete a los rojos.',
+    'El rey león camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan. Cómete a los rojos.',
+  ],
+  mar: [
+    'El pececito nada derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal! Cómete a los rojos.',
+    'El cangrejo lleva su castillo en línea recta: adelante, atrás y a los lados, todas las casillas que quiera. Cómete a los rojos.',
+    'El pulpo mago nada en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color! Cómete a los rojos.',
+    'El caballito de mar salta en forma de L: dos casillas derecho y una de lado. ¡Es el único que puede saltar sobre otras piezas! Cómete a los rojos.',
+    'La estrella de mar reina es la más poderosa: se mueve como torre y como alfil juntos. Cómete a los rojos.',
+    'La morsa rey camina una casilla hacia cualquier lado. Nunca puede pararse donde la atacan. Cómete a los rojos.',
+  ],
+};
+const themed = i => THEMED[pieceSet]?.[i];
+const lessonText = i => themed(i) || LESSONS[i].text;
+const lessonVoice = i => (themed(i) ? `lec_${i}_${pieceSet}` : `lec_${i}`);
 
 const WIN = {
   eat: n => `¡Te los comiste todos en ${n} jugadas!`,
@@ -81,11 +104,11 @@ export function initLearn({ show, pickPromotion, sound, whyIllegal }) {
   function start(i, speak = true) {
     L = { i, chess: new Chess(LESSONS[i].fen, { skipValidation: true }), count: 0, done: false, last: null };
     $('#lesson-title').textContent = LESSONS[i].title;
-    $('#lesson-text').textContent = LESSONS[i].text;
+    $('#lesson-text').textContent = lessonText(i);
     $('#lesson-msg').textContent = '';
     show('lesson');
     draw();
-    if (speak) sound.say(`lec_${i}`);
+    if (speak) sound.say(lessonVoice(i));
   }
 
   async function move(from, to, dragged) {
@@ -149,7 +172,7 @@ export function initLearn({ show, pickPromotion, sound, whyIllegal }) {
   return {
     open,
     reset: () => L && start(L.i),
-    speak: () => L && sound.say(`lec_${L.i}`),
+    speak: () => L && sound.say(lessonVoice(L.i)),
     next: () => (L && L.i + 1 < LESSONS.length ? start(L.i + 1) : open()),
   };
 }
