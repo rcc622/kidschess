@@ -34,7 +34,7 @@ function applyScheme() {
 }
 applyScheme();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch { /* modo privado o sin espacio */ } };
-store.audio = { fx: true, voice: true, music: true, mute: false, ...store.audio };
+store.audio = { fx: true, voice: true, music: true, ...store.audio, mute: false }; // el silencio general se cambió por los tres botones
 sound.setPrefs(store.audio);
 
 let G = null; // partida en curso: datos guardables + chess, thinking, hint...
@@ -134,16 +134,17 @@ function paintSetup() {
 const AUDIO = { fx: ['sound', 'Efectos'], voice: ['voice', 'Voz'], music: ['music', 'Música'] };
 function paintAudio() {
   const a = store.audio;
-  for (const [k, [ico, label]] of Object.entries(AUDIO)) {
-    const b = $(`[data-act="${k}"]`);
+  for (const [k, [ico, label]] of Object.entries(AUDIO)) for (const b of $$(`[data-act="${k}"]`)) {
     b.innerHTML = icon(ico) + `<span>${label}</span>`;
     b.setAttribute('aria-pressed', a[k]);
   }
-  for (const b of $$('[data-act="mute"]')) {
-    b.innerHTML = icon(a.mute ? 'mute' : 'sound');
-    b.setAttribute('aria-pressed', !a.mute);
-    b.setAttribute('aria-label', a.mute ? 'Prender el sonido' : 'Callar el sonido');
-  }
+  const off = !a.fx && !a.voice && !a.music, b = $('[data-act="sound-menu"]');
+  b.innerHTML = icon(off ? 'mute' : 'sound');
+  b.setAttribute('aria-label', off ? 'Sonido apagado: prender efectos, voz o música' : 'Sonido: efectos, voz y música');
+}
+function soundMenu(open = $('#sound-pop').hidden) {
+  $('#sound-pop').hidden = !open;
+  $('[data-act="sound-menu"]').setAttribute('aria-expanded', open);
 }
 function setAudio(k) {
   store.audio[k] = !store.audio[k];
@@ -684,7 +685,7 @@ const actions = {
   fx: () => setAudio('fx'),
   voice: () => setAudio('voice'),
   music: () => setAudio('music'),
-  mute: () => setAudio('mute'),
+  'sound-menu': () => soundMenu(),
   lapiz: tapLapiz,
   start: newGame,
   undo,
@@ -697,6 +698,7 @@ const actions = {
 };
 
 document.addEventListener('click', e => {
+  if (!e.target.closest('#sound-pop, [data-act="sound-menu"]')) soundMenu(false);
   const b = e.target.closest('button');
   if (!b) return;
   const go = b.dataset.go, seg = b.closest('.seg');

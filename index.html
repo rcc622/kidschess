@@ -180,8 +180,15 @@
       <button class="btn icon" data-go="menu" aria-label="Menú"><i data-icon="menu"></i></button>
       <button class="lapiz-btn lapiz-slot" data-act="lapiz" aria-label="Lápiz: pista o ayuda"></button>
       <div id="status" class="status" role="status" aria-live="polite"></div>
-      <button class="btn icon" data-act="mute" aria-label="Sonido"></button>
+      <button class="btn icon" data-act="sound-menu" aria-label="Sonido" aria-expanded="false" aria-controls="sound-pop"></button>
     </header>
+    <div class="card sound-pop" id="sound-pop" hidden>
+      <div class="audio-toggles" role="group" aria-label="Sonido">
+        <button class="btn ghost" data-act="fx"></button>
+        <button class="btn ghost" data-act="voice"></button>
+        <button class="btn ghost" data-act="music"></button>
+      </div>
+    </div>
     <div class="arena">
       <div class="player" id="p-top"></div>
       <div class="board-wrap"><svg id="board" class="board" role="img" aria-label="Tablero de ajedrez"></svg></div>
