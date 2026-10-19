@@ -1,0 +1,639 @@
+{
+ "model": "eleven_v4",
+ "voices": {
+  "mujer": {
+   "name": "Betty",
+   "voice_id": "iV6xDQ4wcM3ZcXDx30GB"
+  },
+  "hombre": {
+   "name": "Antonio",
+   "voice_id": "htFfPSZGJwjBv1CL0aMD"
+  }
+ },
+ "lines": [
+  {
+   "key": "hola",
+   "text": "[excited] ¡Hola! Soy Lápiz. ¿Jugamos ajedrez?"
+  },
+  {
+   "key": "te_toca",
+   "text": "[cheerful] ¡Te toca!"
+  },
+  {
+   "key": "jaque_tu",
+   "text": "[alarmed] ¡Jaque! Cuidado con tu rey."
+  },
+  {
+   "key": "jaque_bot",
+   "text": "[excited] ¡Uy! ¡Jaque al bot!"
+  },
+  {
+   "key": "mate_ganaste",
+   "text": "[excited] ¡Jaque mate! ¡Ganaste!"
+  },
+  {
+   "key": "mate_bot",
+   "text": "[warmly] Jaque mate. Ganó el bot. ¡La próxima le ganas!"
+  },
+  {
+   "key": "tablas",
+   "text": "[cheerful] ¡Tablas! Esta vez nadie gana."
+  },
+  {
+   "key": "tablas_jugadas",
+   "text": "[cheerful] ¡Se acabaron las jugadas! Quedan tablas."
+  },
+  {
+   "key": "pista",
+   "text": "[whispers] Psst… mira, esta jugada está buena."
+  },
+  {
+   "key": "coronar",
+   "text": "[cheerful] ¡Llegaste al final! ¿En qué se convierte tu peón?"
+  },
+  {
+   "key": "dormido",
+   "text": "[yawns] Ajá… ¿Hola? ¿Sigues ahí? ¡Te toca!"
+  },
+  {
+   "key": "casi",
+   "text": "[warmly] Casi… ¡intenta otra vez!"
+  },
+  {
+   "key": "nam",
+   "text": "[playfully] ¡Ñam ñam!"
+  },
+  {
+   "key": "ilegal_jaque",
+   "text": "[warmly] ¡Tu rey está en jaque! Primero tienes que salvarlo."
+  },
+  {
+   "key": "ilegal_peligro",
+   "text": "[warmly] No se puede: tu rey quedaría en peligro."
+  },
+  {
+   "key": "ilegal_enroque",
+   "text": "[warmly] Para enrocar, ni el rey ni la torre deben haberse movido, y el camino debe estar libre."
+  },
+  {
+   "key": "ilegal_enfrente",
+   "text": "[warmly] Hay alguien enfrente: el peón no puede pasar."
+  },
+  {
+   "key": "ilegal_diagonal",
+   "text": "[warmly] El peón solo va en diagonal cuando come."
+  },
+  {
+   "key": "ilegal_camino",
+   "text": "[warmly] Hay alguien en el camino."
+  },
+  {
+   "key": "como_p",
+   "text": "[warmly] El peón camina derecho y solo come en diagonal."
+  },
+  {
+   "key": "como_n",
+   "text": "[warmly] El caballo salta en forma de ele."
+  },
+  {
+   "key": "como_b",
+   "text": "[warmly] El alfil solo va en diagonal."
+  },
+  {
+   "key": "como_r",
+   "text": "[warmly] La torre solo va en línea recta."
+  },
+  {
+   "key": "como_q",
+   "text": "[warmly] La reina va en línea recta o en diagonal."
+  },
+  {
+   "key": "como_k",
+   "text": "[warmly] El rey camina de una en una casilla."
+  },
+  {
+   "key": "win_eat",
+   "text": "[excited] ¡Te los comiste todos! ¡Muy bien!"
+  },
+  {
+   "key": "win_check",
+   "text": "[excited] ¡Jaque! Ese rey está en peligro."
+  },
+  {
+   "key": "win_mate",
+   "text": "[excited] ¡Jaque mate! Así se gana una partida."
+  },
+  {
+   "key": "win_castle",
+   "text": "[excited] ¡Enroque! El rey quedó protegido."
+  },
+  {
+   "key": "win_promote",
+   "text": "[excited] ¡Se convirtió!"
+  },
+  {
+   "key": "win_ep",
+   "text": "[excited] ¡Al paso! Ese truco casi nadie lo conoce."
+  },
+  {
+   "key": "guia_hola",
+   "text": "[cheerful] Modo guía: yo te ayudo. La flecha naranja es una buena idea, pero tú decides."
+  },
+  {
+   "key": "guia_cuidado",
+   "text": "[alarmed] ¡Cuidado! Ahí te pueden comer esa pieza."
+  },
+  {
+   "key": "guia_mate",
+   "text": "[whispers] ¡Psst! Ahí hay un jaque mate. [excited] ¡Búscalo!"
+  },
+  {
+   "key": "solo_rey_bot",
+   "text": "[excited] ¡Al bot solo le queda el rey! Arrincónalo en una orilla y dale jaque mate antes de que se acaben las jugadas."
+  },
+  {
+   "key": "solo_rey_tu",
+   "text": "[excited] ¡Uy, solo te queda el rey! Escápate de las esquinas hasta que se acaben las jugadas."
+  },
+  {
+   "key": "solo_rey_pareja",
+   "text": "[excited] ¡Solo queda un rey! Hay pocas jugadas para dar jaque mate."
+  },
+  {
+   "key": "tema_garabato",
+   "text": "[excited] ¡Vamos con los garabatos!"
+  },
+  {
+   "key": "tema_bosque",
+   "text": "[excited] ¡Vamos con los animales del bosque!"
+  },
+  {
+   "key": "tema_mar",
+   "text": "[excited] ¡Vamos con los animales del mar!"
+  },
+  {
+   "key": "tema_robots",
+   "text": "[excited] ¡Vamos con los robots!"
+  },
+  {
+   "key": "tema_dinos",
+   "text": "[excited] ¡Vamos con los dinosaurios!"
+  },
+  {
+   "key": "tema_espacio",
+   "text": "[excited] ¡Vamos al espacio!"
+  },
+  {
+   "key": "tema_clasicas",
+   "text": "[excited] ¡Vamos con las piezas de siempre!"
+  },
+  {
+   "key": "turno_azul",
+   "text": "[cheerful] Turno de Azul."
+  },
+  {
+   "key": "mate_azul",
+   "text": "[excited] ¡Jaque mate! ¡Gana Azul!"
+  },
+  {
+   "key": "tiempo_azul",
+   "text": "[excited] ¡Se acabó el tiempo! ¡Gana Azul!"
+  },
+  {
+   "key": "turno_rojo",
+   "text": "[cheerful] Turno de Rojo."
+  },
+  {
+   "key": "mate_rojo",
+   "text": "[excited] ¡Jaque mate! ¡Gana Rojo!"
+  },
+  {
+   "key": "tiempo_rojo",
+   "text": "[excited] ¡Se acabó el tiempo! ¡Gana Rojo!"
+  },
+  {
+   "key": "turno_blancas",
+   "text": "[cheerful] Turno de las blancas."
+  },
+  {
+   "key": "mate_blancas",
+   "text": "[excited] ¡Jaque mate! ¡Ganan las blancas!"
+  },
+  {
+   "key": "tiempo_blancas",
+   "text": "[excited] ¡Se acabó el tiempo! ¡Ganan las blancas!"
+  },
+  {
+   "key": "turno_negras",
+   "text": "[cheerful] Turno de las negras."
+  },
+  {
+   "key": "mate_negras",
+   "text": "[excited] ¡Jaque mate! ¡Ganan las negras!"
+  },
+  {
+   "key": "tiempo_negras",
+   "text": "[excited] ¡Se acabó el tiempo! ¡Ganan las negras!"
+  },
+  {
+   "key": "turno_naranja",
+   "text": "[cheerful] Turno de Naranja."
+  },
+  {
+   "key": "mate_naranja",
+   "text": "[excited] ¡Jaque mate! ¡Gana Naranja!"
+  },
+  {
+   "key": "tiempo_naranja",
+   "text": "[excited] ¡Se acabó el tiempo! ¡Gana Naranja!"
+  },
+  {
+   "key": "turno_morado",
+   "text": "[cheerful] Turno de Morado."
+  },
+  {
+   "key": "mate_morado",
+   "text": "[excited] ¡Jaque mate! ¡Gana Morado!"
+  },
+  {
+   "key": "tiempo_morado",
+   "text": "[excited] ¡Se acabó el tiempo! ¡Gana Morado!"
+  },
+  {
+   "key": "clasico_hola",
+   "text": "[cheerful] Modo clásico: cada quien tiene su reloj. ¡Piensa bien, pero no te tardes!"
+  },
+  {
+   "key": "poco_tiempo",
+   "text": "[alarmed] ¡Ojo! Te queda poco tiempo."
+  },
+  {
+   "key": "tiempo_ganaste",
+   "text": "[excited] ¡Al bot se le acabó el tiempo! ¡Ganaste!"
+  },
+  {
+   "key": "tiempo_bot",
+   "text": "[warmly] Se te acabó el tiempo. ¡La próxima le ganas!"
+  },
+  {
+   "key": "tiempo_tablas",
+   "text": "[warmly] Se acabó el tiempo, pero no quedan piezas para dar jaque mate. ¡Tablas!"
+  },
+  {
+   "key": "lec_0",
+   "text": "[cheerful] La ranita brinca derecho, de una en una. En su primer brinco puede avanzar dos. ¡Pero come en diagonal! Cómete a los rojos."
+  },
+  {
+   "key": "lec_0_x",
+   "text": "[cheerful] La ranita brinca derecho, de una en una. En su primer brinco puede avanzar dos. ¡Pero come en diagonal!"
+  },
+  {
+   "key": "lec_1",
+   "text": "[cheerful] El castillo corre en línea recta: adelante, atrás y a los lados, todas las casillas que quiera. Cómete a los rojos."
+  },
+  {
+   "key": "lec_1_x",
+   "text": "[cheerful] El castillo corre en línea recta: adelante, atrás y a los lados, todas las casillas que quiera."
+  },
+  {
+   "key": "lec_2",
+   "text": "[cheerful] El mago se mueve en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color! Cómete a los rojos."
+  },
+  {
+   "key": "lec_2_x",
+   "text": "[cheerful] El mago se mueve en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color!"
+  },
+  {
+   "key": "lec_3",
+   "text": "[cheerful] El caballito salta en forma de ele: dos casillas derecho y una de lado. ¡Es el único que puede saltar sobre otras piezas! Cómete a los rojos."
+  },
+  {
+   "key": "lec_3_x",
+   "text": "[cheerful] El caballito salta en forma de ele: dos casillas derecho y una de lado. ¡Es el único que puede saltar sobre otras piezas!"
+  },
+  {
+   "key": "lec_4",
+   "text": "[cheerful] La reina flor es la más poderosa: se mueve como torre y como alfil juntos. Cómete a los rojos."
+  },
+  {
+   "key": "lec_4_x",
+   "text": "[cheerful] La reina flor es la más poderosa: se mueve como torre y como alfil juntos."
+  },
+  {
+   "key": "lec_5",
+   "text": "[cheerful] El rey sol camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan. Cómete a los rojos."
+  },
+  {
+   "key": "lec_5_x",
+   "text": "[cheerful] El rey sol camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan."
+  },
+  {
+   "key": "lec_6",
+   "text": "[cheerful] Jaque es cuando atacas al rey. El otro tiene que salvarlo: moverlo, taparlo o comerse al atacante. ¡Dale jaque al rey rojo!"
+  },
+  {
+   "key": "lec_6_x",
+   "text": "[cheerful] Jaque es cuando atacas al rey. El otro tiene que salvarlo: moverlo, taparlo o comerse al atacante."
+  },
+  {
+   "key": "lec_7",
+   "text": "[cheerful] Jaque mate es un jaque sin escapatoria. ¡Así se gana! Encuentra el jaque mate en una jugada."
+  },
+  {
+   "key": "lec_8",
+   "text": "[cheerful] Tu reina y tu rey trabajan en equipo. ¿Dónde está el jaque mate?"
+  },
+  {
+   "key": "lec_9",
+   "text": "[cheerful] El rey y la torre hacen equipo: el rey camina dos casillas hacia una torre y la torre salta a su otro lado. Solo si ninguno se ha movido y no hay nadie en medio. Toca al rey."
+  },
+  {
+   "key": "lec_10",
+   "text": "[cheerful] Si un peón llega hasta el otro lado del tablero, ¡se convierte en la pieza que quieras! Casi siempre se elige la reina."
+  },
+  {
+   "key": "lec_11",
+   "text": "[cheerful] Truco secreto: el peón rojo acaba de avanzar dos casillas y quedó junto al tuyo. Puedes comerlo al paso, como si solo hubiera avanzado una. ¡Solo en ese mismo turno!"
+  },
+  {
+   "key": "lec_0_bosque",
+   "text": "[cheerful] El pollito camina derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal! Cómete a los rojos."
+  },
+  {
+   "key": "lec_0_bosque_x",
+   "text": "[cheerful] El pollito camina derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal!"
+  },
+  {
+   "key": "lec_1_bosque",
+   "text": "[cheerful] La tortuga carga su castillo en línea recta: adelante, atrás y a los lados, todas las casillas que quiera. Cómete a los rojos."
+  },
+  {
+   "key": "lec_1_bosque_x",
+   "text": "[cheerful] La tortuga carga su castillo en línea recta: adelante, atrás y a los lados, todas las casillas que quiera."
+  },
+  {
+   "key": "lec_2_bosque",
+   "text": "[cheerful] El búho vuela en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color! Cómete a los rojos."
+  },
+  {
+   "key": "lec_2_bosque_x",
+   "text": "[cheerful] El búho vuela en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color!"
+  },
+  {
+   "key": "lec_4_bosque",
+   "text": "[cheerful] La abeja reina es la más poderosa: vuela como torre y como alfil juntos. Cómete a los rojos."
+  },
+  {
+   "key": "lec_4_bosque_x",
+   "text": "[cheerful] La abeja reina es la más poderosa: vuela como torre y como alfil juntos."
+  },
+  {
+   "key": "lec_5_bosque",
+   "text": "[cheerful] El rey león camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan. Cómete a los rojos."
+  },
+  {
+   "key": "lec_5_bosque_x",
+   "text": "[cheerful] El rey león camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan."
+  },
+  {
+   "key": "lec_0_mar",
+   "text": "[cheerful] El pececito nada derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal! Cómete a los rojos."
+  },
+  {
+   "key": "lec_0_mar_x",
+   "text": "[cheerful] El pececito nada derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal!"
+  },
+  {
+   "key": "lec_1_mar",
+   "text": "[cheerful] El cangrejo lleva su castillo en línea recta: adelante, atrás y a los lados, todas las casillas que quiera. Cómete a los rojos."
+  },
+  {
+   "key": "lec_1_mar_x",
+   "text": "[cheerful] El cangrejo lleva su castillo en línea recta: adelante, atrás y a los lados, todas las casillas que quiera."
+  },
+  {
+   "key": "lec_2_mar",
+   "text": "[cheerful] El pulpo mago nada en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color! Cómete a los rojos."
+  },
+  {
+   "key": "lec_2_mar_x",
+   "text": "[cheerful] El pulpo mago nada en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color!"
+  },
+  {
+   "key": "lec_3_mar",
+   "text": "[cheerful] El caballito de mar salta en forma de ele: dos casillas derecho y una de lado. ¡Es el único que puede saltar sobre otras piezas! Cómete a los rojos."
+  },
+  {
+   "key": "lec_3_mar_x",
+   "text": "[cheerful] El caballito de mar salta en forma de ele: dos casillas derecho y una de lado. ¡Es el único que puede saltar sobre otras piezas!"
+  },
+  {
+   "key": "lec_4_mar",
+   "text": "[cheerful] La estrella de mar reina es la más poderosa: se mueve como torre y como alfil juntos. Cómete a los rojos."
+  },
+  {
+   "key": "lec_4_mar_x",
+   "text": "[cheerful] La estrella de mar reina es la más poderosa: se mueve como torre y como alfil juntos."
+  },
+  {
+   "key": "lec_5_mar",
+   "text": "[cheerful] La morsa rey camina una casilla hacia cualquier lado. Nunca puede pararse donde la atacan. Cómete a los rojos."
+  },
+  {
+   "key": "lec_5_mar_x",
+   "text": "[cheerful] La morsa rey camina una casilla hacia cualquier lado. Nunca puede pararse donde la atacan."
+  },
+  {
+   "key": "lec_0_robots",
+   "text": "[cheerful] El robotito rueda derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal! Cómete a los rojos."
+  },
+  {
+   "key": "lec_0_robots_x",
+   "text": "[cheerful] El robotito rueda derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal!"
+  },
+  {
+   "key": "lec_1_robots",
+   "text": "[cheerful] El robot castillo avanza en línea recta: adelante, atrás y a los lados, todas las casillas que quiera. Cómete a los rojos."
+  },
+  {
+   "key": "lec_1_robots_x",
+   "text": "[cheerful] El robot castillo avanza en línea recta: adelante, atrás y a los lados, todas las casillas que quiera."
+  },
+  {
+   "key": "lec_2_robots",
+   "text": "[cheerful] El dron vuela en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color! Cómete a los rojos."
+  },
+  {
+   "key": "lec_2_robots_x",
+   "text": "[cheerful] El dron vuela en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color!"
+  },
+  {
+   "key": "lec_3_robots",
+   "text": "[cheerful] El caballo robot salta en forma de ele: dos casillas derecho y una de lado. ¡Es el único que puede saltar sobre otras piezas! Cómete a los rojos."
+  },
+  {
+   "key": "lec_3_robots_x",
+   "text": "[cheerful] El caballo robot salta en forma de ele: dos casillas derecho y una de lado. ¡Es el único que puede saltar sobre otras piezas!"
+  },
+  {
+   "key": "lec_4_robots",
+   "text": "[cheerful] La reina robot es la más poderosa: se mueve como torre y como alfil juntos. Cómete a los rojos."
+  },
+  {
+   "key": "lec_4_robots_x",
+   "text": "[cheerful] La reina robot es la más poderosa: se mueve como torre y como alfil juntos."
+  },
+  {
+   "key": "lec_5_robots",
+   "text": "[cheerful] El rey robot camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan. Cómete a los rojos."
+  },
+  {
+   "key": "lec_5_robots_x",
+   "text": "[cheerful] El rey robot camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan."
+  },
+  {
+   "key": "lec_0_dinos",
+   "text": "[cheerful] El dino bebé camina derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal! Cómete a los rojos."
+  },
+  {
+   "key": "lec_0_dinos_x",
+   "text": "[cheerful] El dino bebé camina derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal!"
+  },
+  {
+   "key": "lec_1_dinos",
+   "text": "[cheerful] El triceratops embiste en línea recta: adelante, atrás y a los lados, todas las casillas que quiera. Cómete a los rojos."
+  },
+  {
+   "key": "lec_1_dinos_x",
+   "text": "[cheerful] El triceratops embiste en línea recta: adelante, atrás y a los lados, todas las casillas que quiera."
+  },
+  {
+   "key": "lec_2_dinos",
+   "text": "[cheerful] El braquiosaurio estira el cuello en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color! Cómete a los rojos."
+  },
+  {
+   "key": "lec_2_dinos_x",
+   "text": "[cheerful] El braquiosaurio estira el cuello en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color!"
+  },
+  {
+   "key": "lec_3_dinos",
+   "text": "[cheerful] El pterodáctilo vuela en forma de ele: dos casillas derecho y una de lado. ¡Es el único que puede pasar sobre otras piezas! Cómete a los rojos."
+  },
+  {
+   "key": "lec_3_dinos_x",
+   "text": "[cheerful] El pterodáctilo vuela en forma de ele: dos casillas derecho y una de lado. ¡Es el único que puede pasar sobre otras piezas!"
+  },
+  {
+   "key": "lec_4_dinos",
+   "text": "[cheerful] La estegosaurio reina es la más poderosa: se mueve como torre y como alfil juntos. Cómete a los rojos."
+  },
+  {
+   "key": "lec_4_dinos_x",
+   "text": "[cheerful] La estegosaurio reina es la más poderosa: se mueve como torre y como alfil juntos."
+  },
+  {
+   "key": "lec_5_dinos",
+   "text": "[cheerful] El tiranosaurio rey camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan. Cómete a los rojos."
+  },
+  {
+   "key": "lec_5_dinos_x",
+   "text": "[cheerful] El tiranosaurio rey camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan."
+  },
+  {
+   "key": "lec_0_espacio",
+   "text": "[cheerful] El marcianito flota derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal! Cómete a los rojos."
+  },
+  {
+   "key": "lec_0_espacio_x",
+   "text": "[cheerful] El marcianito flota derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal!"
+  },
+  {
+   "key": "lec_1_espacio",
+   "text": "[cheerful] El astronauta avanza en línea recta: adelante, atrás y a los lados, todas las casillas que quiera. Cómete a los rojos."
+  },
+  {
+   "key": "lec_1_espacio_x",
+   "text": "[cheerful] El astronauta avanza en línea recta: adelante, atrás y a los lados, todas las casillas que quiera."
+  },
+  {
+   "key": "lec_2_espacio",
+   "text": "[cheerful] El ovni vuela en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color! Cómete a los rojos."
+  },
+  {
+   "key": "lec_2_espacio_x",
+   "text": "[cheerful] El ovni vuela en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color!"
+  },
+  {
+   "key": "lec_3_espacio",
+   "text": "[cheerful] El cohete salta en forma de ele: dos casillas derecho y una de lado. ¡Es el único que puede saltar sobre otras piezas! Cómete a los rojos."
+  },
+  {
+   "key": "lec_3_espacio_x",
+   "text": "[cheerful] El cohete salta en forma de ele: dos casillas derecho y una de lado. ¡Es el único que puede saltar sobre otras piezas!"
+  },
+  {
+   "key": "lec_4_espacio",
+   "text": "[cheerful] La luna reina es la más poderosa: se mueve como torre y como alfil juntos. Cómete a los rojos."
+  },
+  {
+   "key": "lec_4_espacio_x",
+   "text": "[cheerful] La luna reina es la más poderosa: se mueve como torre y como alfil juntos."
+  },
+  {
+   "key": "lec_5_espacio",
+   "text": "[cheerful] El rey Saturno camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan. Cómete a los rojos."
+  },
+  {
+   "key": "lec_5_espacio_x",
+   "text": "[cheerful] El rey Saturno camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan."
+  },
+  {
+   "key": "lec_0_clasicas",
+   "text": "[cheerful] El peón camina derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal! Cómete a los rojos."
+  },
+  {
+   "key": "lec_0_clasicas_x",
+   "text": "[cheerful] El peón camina derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal!"
+  },
+  {
+   "key": "lec_1_clasicas",
+   "text": "[cheerful] La torre corre en línea recta: adelante, atrás y a los lados, todas las casillas que quiera. Cómete a los rojos."
+  },
+  {
+   "key": "lec_1_clasicas_x",
+   "text": "[cheerful] La torre corre en línea recta: adelante, atrás y a los lados, todas las casillas que quiera."
+  },
+  {
+   "key": "lec_2_clasicas",
+   "text": "[cheerful] El alfil se mueve en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color! Cómete a los rojos."
+  },
+  {
+   "key": "lec_2_clasicas_x",
+   "text": "[cheerful] El alfil se mueve en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color!"
+  },
+  {
+   "key": "lec_3_clasicas",
+   "text": "[cheerful] El caballo salta en forma de ele: dos casillas derecho y una de lado. ¡Es el único que puede saltar sobre otras piezas! Cómete a los rojos."
+  },
+  {
+   "key": "lec_3_clasicas_x",
+   "text": "[cheerful] El caballo salta en forma de ele: dos casillas derecho y una de lado. ¡Es el único que puede saltar sobre otras piezas!"
+  },
+  {
+   "key": "lec_4_clasicas",
+   "text": "[cheerful] La reina es la más poderosa: se mueve como torre y como alfil juntos. Cómete a los rojos."
+  },
+  {
+   "key": "lec_4_clasicas_x",
+   "text": "[cheerful] La reina es la más poderosa: se mueve como torre y como alfil juntos."
+  },
+  {
+   "key": "lec_5_clasicas",
+   "text": "[cheerful] El rey camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan. Cómete a los rojos."
+  },
+  {
+   "key": "lec_5_clasicas_x",
+   "text": "[cheerful] El rey camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan."
+  }
+ ]
+}
