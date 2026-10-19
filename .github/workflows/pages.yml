@@ -1,10 +1,8 @@
-# Publica el sitio en GitHub Pages en cada push a main (o a mano con "Run workflow").
-# Requiere Settings → Pages → Source: "GitHub Actions".
+# Respaldo manual: Actions → "Publicar en GitHub Pages" → Run workflow.
+# Úsalo si el build automático de Pages ("pages build and deployment") no arranca después de un push.
 name: Publicar en GitHub Pages
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
