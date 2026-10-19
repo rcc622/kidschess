@@ -63,7 +63,8 @@ export function createBoard(svg, cb) {
     for (const [sq, pc] of Object.entries(st.pieces)) {
       const [x, y] = xy(sq);
       const mood = sq === sel && pc.mood === 'idle' ? 'happy' : pc.mood;
-      p += `<g class="pc${sq === sel ? ' sel' : ''}" data-sq="${sq}" transform="translate(${x} ${y})"><g class="pc-in">${pieceArt(pc.type, pc.color, mood)}</g></g>`;
+      const cls = `pc${sq === sel ? ' sel' : ''} m-${mood}${pc.anim ? ' a-' + pc.anim : ''}`;
+      p += `<g class="${cls}" style="--d:${(seedOf(sq) % 9) / 12}s" data-sq="${sq}" transform="translate(${x} ${y})"><g class="pc-in">${pieceArt(pc.type, pc.color, mood)}</g></g>`;
     }
     gPieces.innerHTML = p;
     gEmo.innerHTML = (st.emotes || []).map(e => marks.emote(...xy(e.sq), e.kind, seedOf(e.sq))).join('');
@@ -90,10 +91,21 @@ export function createBoard(svg, cb) {
       if (!el || !el.animate) continue;
       const [x1, y1] = xy(from), [x2, y2] = xy(to), dx = x1 - x2, dy = y1 - y2;
       el.animate([
-        { transform: `translate(${dx}px, ${dy}px)` },
-        { transform: `translate(${dx / 2}px, ${dy / 2 - 22}px) scale(1.1)`, offset: 0.5 },
-        { transform: 'translate(0px, 0px)' },
-      ], { duration: 340, easing: 'ease-in-out' });
+        { transform: `translate(${dx}px, ${dy}px) scale(.94, 1.06)` },
+        { transform: `translate(${dx / 2}px, ${dy / 2 - 24}px) scale(1.06, 1.08)`, offset: 0.45 },
+        { transform: 'translate(0px, 0px) scale(1.16, .84)', offset: 0.82 },
+        { transform: 'translate(0px, 0px) scale(1, 1)' },
+      ], { duration: 420, easing: 'ease-in-out' });
+    }
+    if (anim.promote) {
+      const [x, y] = xy(anim.promote);
+      gOver.insertAdjacentHTML('beforeend', `<g class="fx sparkle">${marks.sparkle(x, y, Date.now() % 997)}</g>`);
+      gPieces.querySelector(`[data-sq="${anim.promote}"] .art`)?.animate?.([
+        { transform: 'scale(.2) rotate(-200deg)', opacity: 0 },
+        { transform: 'scale(1.3) rotate(10deg)', opacity: 1, offset: 0.7 },
+        { transform: 'scale(1) rotate(0deg)' },
+      ], { duration: 700, delay: 250, easing: 'ease-out', fill: 'backwards' });
+      setTimeout(() => gOver.querySelector('.sparkle')?.remove(), 1400);
     }
     if (anim.captured) {
       const { sq, type, color } = anim.captured, [x, y] = xy(sq);

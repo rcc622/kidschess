@@ -68,9 +68,10 @@ export function initLearn({ show, pickPromotion, sound, whyIllegal }) {
     let check = null;
     for (const row of c.board()) for (const p of row) {
       if (!p) continue;
+      const anim = p.color === 'w' && L.won ? 'cheer' : null;
       const mood = p.color === 'w' ? (L.done ? 'happy' : 'idle')
         : p.type === 'k' ? (c.isCheckmate() ? 'dead' : c.inCheck() ? 'scared' : 'idle') : les.goal === 'eat' ? 'scared' : 'idle';
-      pieces[p.square] = { type: p.type, color: p.color, mood };
+      pieces[p.square] = { type: p.type, color: p.color, mood, anim };
       if (p.type === 'k' && p.color === c.turn() && c.inCheck()) check = p.square;
     }
     view.draw({ pieces, flipped: false, last: L.last, check, anim });
@@ -99,6 +100,7 @@ export function initLearn({ show, pickPromotion, sound, whyIllegal }) {
     const anim = { moves: dragged ? [] : [{ from, to }] };
     if (castle) anim.moves.push(mv.isKingsideCastle() ? { from: 'h1', to: 'f1' } : { from: 'a1', to: 'd1' });
     if (mv.captured) anim.captured = { type: mv.captured, color: 'b', sq: mv.isEnPassant() ? to[0] + from[1] : to };
+    if (mv.promotion) anim.promote = to;
     L.count++;
     L.last = { from, to, color: 'w', knight: p.type === 'n' };
 
@@ -107,6 +109,7 @@ export function initLearn({ show, pickPromotion, sound, whyIllegal }) {
     const msg = $('#lesson-msg');
     if (ok) {
       L.done = true;
+      L.won = true;
       msg.textContent = WIN[les.goal](L.count);
       sound.say(WIN_VOICE[les.goal]);
       sound.play('promote');

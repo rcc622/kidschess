@@ -1,7 +1,7 @@
 // Flujo de la app: menú → opciones → partida → fin. Guardado en localStorage.
 import { Chess } from './chess.js';
 import { createBoard } from './board.js';
-import { pieceSVG, pieceArt, boardArt, frame, doodle, icon, skySVG, tallySVG, lapizSVG, spiderSVG, antsSVG, startBoil } from './art.js';
+import { pieceSVG, pieceArt, boardArt, frame, doodle, icon, skySVG, tallySVG, lapizSVG, spiderSVG, antsSVG, startBoil, DEFS, SETS, setPieceSet } from './art.js';
 import * as sound from './sound.js';
 import { initLearn } from './learn.js';
 
@@ -21,7 +21,8 @@ const HELPS = {
 // ---------- guardado ----------
 const KEY = 'ajedrez-garabato-v1';
 const store = (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } })();
-store.opts = { mode: 'bot', level: '1', color: 'w', helps: 'muchas', spin: '0', ...store.opts };
+store.opts = { mode: 'bot', level: '1', color: 'w', helps: 'muchas', spin: '0', set: 'garabato', ...store.opts };
+setPieceSet(store.opts.set);
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch { /* modo privado o sin espacio */ } };
 store.audio = { fx: true, voice: true, music: true, mute: false, ...store.audio };
 sound.setPrefs(store.audio);
@@ -73,6 +74,18 @@ function openSetup(mode) {
   $('#setup-title').textContent = mode === 'bot' ? 'Contra el bot' : 'En pareja';
   paintSetup();
   show('setup');
+}
+
+// los dibujitos de botones y portada siguen al juego de piezas elegido
+function paintArt() {
+  for (const el of $$('[data-art]')) {
+    const svg = pieceSVG(el.dataset.art, el.dataset.color || 'w', el.dataset.mood, el.dataset.set);
+    if (el.tagName !== 'BUTTON') { el.innerHTML = svg; continue; }
+    let slot = el.querySelector(':scope > .art-slot');
+    if (!slot) { el.insertAdjacentHTML('afterbegin', '<span class="art-slot"></span>'); slot = el.querySelector(':scope > .art-slot'); }
+    slot.innerHTML = svg;
+  }
+  $('.hero').innerHTML = pieceSVG('k', 'w', 'happy') + `<button class="lapiz-btn hero-lapiz" data-act="lapiz" aria-label="Lápiz te saluda">${lapizSVG('happy')}</button>` + pieceSVG('q', 'b', 'happy');
 }
 
 function paintSetup() {
@@ -213,6 +226,7 @@ function play(m, dragged = false) {
     anim.moves.push({ from: (ks ? 'h' : 'a') + r, to: (ks ? 'f' : 'd') + r });
   }
   if (mv.captured) anim.captured = { type: mv.captured, color: other(mv.color), sq: mv.isEnPassant() ? mv.to[0] + mv.from[1] : mv.to };
+  if (mv.promotion) anim.promote = mv.to;
   sound.play(c.inCheck() && !c.isCheckmate() ? 'check' : mv.captured ? 'capture' : castle ? 'castle' : mv.promotion ? 'promote' : 'move');
   if (mv.captured) sound.creature('ay');
   if (c.inCheck() && !c.isCheckmate()) sound.say(g.mode === 'bot' && c.turn() !== g.human ? 'jaque_bot' : 'jaque_tu');
@@ -316,10 +330,12 @@ function render(anim) {
     if (h.danger && mine && p.color === turn && p.type !== 'k' && inDanger(c, p)) return 'scared';
     return G.sleepy && p.color === turn ? 'sleepy' : 'idle';
   };
+  const mate = over && c.isCheckmate();
+  const animOf = p => mate ? (p.color !== turn ? 'cheer' : p.type === 'k' ? 'dizzy' : null) : G.oops?.sq === p.square ? 'refuse' : null;
   const pieces = {}, kings = {};
   for (const row of c.board()) for (const p of row) {
     if (!p) continue;
-    pieces[p.square] = { type: p.type, color: p.color, mood: mood(p) };
+    pieces[p.square] = { type: p.type, color: p.color, mood: mood(p), anim: animOf(p) };
     if (p.type === 'k') kings[p.color] = p.square;
   }
   const emotes = [];
@@ -483,6 +499,18 @@ setInterval(() => {
   if (Date.now() - lastTouch > 25000) { G.sleepy = true; render(); sound.say('dormido'); }
 }, 5000);
 
+// gestos al azar: parpadear, mirar a los lados, brinquito, bailecito
+const GAGS = ['blink', 'blink', 'blink', 'look', 'hop', 'wiggle'];
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(() => {
+  if (document.hidden) return;
+  const arts = $$('.screen:not([hidden]) .art');
+  for (let i = 0; i < 2 && arts.length; i++) {
+    const el = arts[Math.floor(Math.random() * arts.length)], g = 'gag-' + GAGS[Math.floor(Math.random() * GAGS.length)];
+    el.classList.add(g);
+    setTimeout(() => el.classList.remove(g), 1600);
+  }
+}, 1500);
+
 // ---------- arranque ----------
 const learn = initLearn({ show, pickPromotion, sound, whyIllegal });
 
@@ -522,11 +550,16 @@ document.addEventListener('click', e => {
   else if (go === 'bot' || go === 'pair') openSetup(go);
   else if (go === 'learn') learn.open();
   if (b.dataset.act) actions[b.dataset.act]?.();
-  if (seg) { store.opts[seg.dataset.opt] = b.dataset.val; save(); paintSetup(); sound.play('select'); }
+  if (seg) {
+    store.opts[seg.dataset.opt] = b.dataset.val;
+    if (seg.dataset.opt === 'set') { setPieceSet(b.dataset.val); paintArt(); }
+    save(); paintSetup(); sound.play('select');
+  }
 });
 
 for (const i of $$('[data-icon]')) i.outerHTML = icon(i.dataset.icon);
-for (const b of $$('[data-art]')) b.insertAdjacentHTML('afterbegin', pieceSVG(b.dataset.art, b.dataset.color || 'w', b.dataset.mood));
+document.body.insertAdjacentHTML('afterbegin', DEFS);
+paintArt();
 
 // marco a pluma en cada botón y tarjeta, también en los que se crean después; se redibuja si cambia de tamaño
 const FRAMED = '.btn, .seg button, .mode, .card';
@@ -553,7 +586,6 @@ new MutationObserver(list => {
     for (const el of n.querySelectorAll(FRAMED)) addFrame(el);
   }
 }).observe(document.body, { childList: true, subtree: true });
-$('.hero').innerHTML = pieceSVG('k', 'w', 'happy') + `<button class="lapiz-btn hero-lapiz" data-act="lapiz" aria-label="Lápiz te saluda">${lapizSVG('happy')}</button>` + pieceSVG('q', 'b', 'happy');
 for (const el of $$('.lapiz-slot')) el.innerHTML = lapizSVG();
 paintAudio();
 drawDoodles();

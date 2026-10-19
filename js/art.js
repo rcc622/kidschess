@@ -7,60 +7,8 @@ export const PAPER = '#fffcf3';
 export const PENCIL = '#555';
 const FRAMES = 3;
 
-// PRNG con semilla: el mismo dibujo sale igual en cada render
-function rng(seed) {
-  let s = (seed % 2147483646) + 1;
-  return () => (s = (s * 16807) % 2147483647) / 2147483647;
-}
-const hash = str => [...str].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1e9, 7);
-const f = n => Math.round(n * 10) / 10;
-
-// mueve cada número del path un poquito → nunca líneas perfectas
-function wob(d, r, amt = 1.1) {
-  return d.replace(/-?\d*\.?\d+/g, n => f(+n + (r() - 0.5) * 2 * amt));
-}
-
-// Catmull-Rom → Bézier
-function smooth(p) {
-  let d = `M${f(p[0][0])} ${f(p[0][1])}`;
-  for (let i = 0; i < p.length - 1; i++) {
-    const p0 = p[i - 1] || p[i], p1 = p[i], p2 = p[i + 1], p3 = p[i + 2] || p2;
-    d += `C${f(p1[0] + (p2[0] - p0[0]) / 6)} ${f(p1[1] + (p2[1] - p0[1]) / 6)} ${f(p2[0] - (p3[0] - p1[0]) / 6)} ${f(p2[1] - (p3[1] - p1[1]) / 6)} ${f(p2[0])} ${f(p2[1])}`;
-  }
-  return d;
-}
-
-// círculo hecho a mano; over > 0 = se pasa del inicio como cuando uno cierra un círculo con pluma
-export function blob(cx, cy, rx, ry, r, amt = 0.06, over = 0, n = 9) {
-  const a0 = r() * Math.PI * 2, ks = Array.from({ length: n }, () => 1 + (r() - 0.5) * 2 * amt), pts = [];
-  const total = n + Math.round(n * over);
-  for (let i = 0; i <= total; i++) {
-    const a = a0 + (i / n) * Math.PI * 2, k = ks[i % n] * (1 + (over ? 0.05 * i / n : 0));
-    pts.push([cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k]);
-  }
-  return smooth(pts);
-}
-
-export function line(x1, y1, x2, y2, r, amt = 1.5) {
-  const j = () => (r() - 0.5) * 2 * amt;
-  return `M${f(x1 + j())} ${f(y1 + j())}Q${f((x1 + x2) / 2 + j() * 1.5)} ${f((y1 + y2) / 2 + j() * 1.5)} ${f(x2 + j())} ${f(y2 + j())}`;
-}
-
-function star(cx, cy, R) {
-  let d = '';
-  for (let i = 0; i < 10; i++) {
-    const a = -Math.PI / 2 + i * Math.PI / 5, k = i % 2 ? R * 0.45 : R;
-    d += `${i ? 'L' : 'M'}${f(cx + Math.cos(a) * k)} ${f(cy + Math.sin(a) * k)}`;
-  }
-  return d + 'Z';
-}
-
-function petal(cx, cy, len, w, ang) {
-  const c = Math.cos(ang), s = Math.sin(ang), P = (u, v) => `${f(cx + u * c - v * s)} ${f(cy + u * s + v * c)}`;
-  return `M${P(0, 0)}C${P(len * 0.3, -w)} ${P(len, -w * 0.9)} ${P(len, 0)}C${P(len, w * 0.9)} ${P(len * 0.3, w)} ${P(0, 0)}Z`;
-}
-
-const dots = pts => pts.map(([x, y]) => `M${x} ${y}l0.1 0`).join('');
+import { rng, hash, f, wob, smooth, blob, line, star, petal, dots } from './ink.js';
+import { BOSQUE, MAR } from './animals.js';
 
 // ---------- piezas: cada parte = [path o fn(r), relleno, grosor] ----------
 // rellenos: t = tinta clara del bando, i = tinta, p = papel, n = sin relleno
@@ -133,58 +81,83 @@ const PIECES = {
   },
 };
 
-function face({ eyes, mouth: [mx, my], s }, mood, ink, r) {
+// ojos detallados ('big'): blanco + pupila + brillo; opcional pestañas, cejas y chapitas.
+// Los ojos van en <g class="eyes"> y las pupilas en <g class="pupils"> para poder parpadear y mirar.
+function face({ eyes, mouth, s, lashes, brows }, mood, ink, r, big = false) {
   const st = (d, w = 2.4, fill = 'none') => `<path d="${d}" fill="${fill}" stroke="${ink}" stroke-width="${w}"/>`;
-  let out = '';
-  for (const [ex, ey] of eyes) {
-    if (mood === 'happy') out += st(wob(`M${ex - 3 * s} ${ey + 1}Q${ex} ${ey - 4 * s} ${ex + 3 * s} ${ey + 1}`, r, 0.4));
-    else if (mood === 'scared') out += st(blob(ex, ey, 3.8 * s, 4.2 * s, r, 0.05), 1.8, PAPER) + st(blob(ex, ey + 0.5, 1.2, 1.2, r, 0), 1.8, ink);
-    else if (mood === 'dead') out += st(wob(`M${ex - 3} ${ey - 3}L${ex + 3} ${ey + 3}M${ex + 3} ${ey - 3}L${ex - 3} ${ey + 3}`, r, 0.4));
-    else if (mood === 'sleepy') out += st(wob(`M${ex - 3 * s} ${ey}Q${ex} ${ey + 3 * s} ${ex + 3 * s} ${ey}`, r, 0.3));
-    else out += st(blob(ex, ey, 2.3 * s, 2.6 * s, r, 0.05), 1.2, ink);
+  let ey = '', pu = '', out = '';
+  for (const [ex, y] of eyes) {
+    if (mood === 'happy') ey += st(wob(`M${ex - 3 * s} ${y + 1}Q${ex} ${y - 4 * s} ${ex + 3 * s} ${y + 1}`, r, 0.4));
+    else if (mood === 'scared') { ey += st(blob(ex, y, 3.8 * s, 4.2 * s, r, 0.05), 1.6, PAPER); pu += st(blob(ex, y + 0.5, 1.2, 1.2, r, 0), 1.6, ink); }
+    else if (mood === 'dead') ey += st(wob(`M${ex - 3} ${y - 3}L${ex + 3} ${y + 3}M${ex + 3} ${y - 3}L${ex - 3} ${y + 3}`, r, 0.4));
+    else if (mood === 'sleepy') ey += st(wob(`M${ex - 3 * s} ${y}Q${ex} ${y + 3 * s} ${ex + 3 * s} ${y}`, r, 0.3));
+    else if (big) {
+      ey += st(blob(ex, y, 3.9 * s, 4.5 * s, r, 0.05), 1.3, PAPER);
+      pu += `<path d="${blob(ex + 0.4 * s, y + 0.7 * s, 2.1 * s, 2.4 * s, r, 0.05)}" fill="${ink}"/><path d="${blob(ex - 0.5 * s, y - 0.4 * s, 0.85 * s, 0.85 * s, r, 0)}" fill="${PAPER}"/>`;
+    } else ey += st(blob(ex, y, 2.3 * s, 2.6 * s, r, 0.05), 1.2, ink);
+    if (lashes && mood !== 'dead') ey += st(wob(`M${ex - 3 * s} ${y - 3.8 * s}L${ex - 4.6 * s} ${y - 6.4 * s}M${ex} ${y - 4.6 * s}L${ex} ${y - 7.4 * s}M${ex + 3 * s} ${y - 3.8 * s}L${ex + 4.6 * s} ${y - 6.4 * s}`, r, 0.3), 1.1);
+    if (brows) { const by = y - (mood === 'scared' ? 10 : 7.5) * s; ey += st(wob(`M${ex - 4.5 * s} ${by + 1}Q${ex} ${by - 2} ${ex + 4.5 * s} ${by + 1}`, r, 0.4), 2.4); }
   }
-  if (mood === 'happy') {
-    out += st(wob(`M${mx - 6 * s} ${my - 1}Q${mx} ${my + 8 * s} ${mx + 6 * s} ${my - 1}Z`, r, 0.4), 2, PAPER);
-    out += eyes.map(([ex, ey], i) => `<path d="${blob(ex + (i ? 4 : -4) * s, ey + 6 * s, 2.6 * s, 1.8 * s, r)}" fill="#e88" opacity=".55"/>`).join('');
-  } else if (mood === 'scared') {
-    out += st(wob(`M${mx - 5 * s} ${my + 1}Q${mx - 2.5 * s} ${my - 2} ${mx} ${my + 1}Q${mx + 2.5 * s} ${my + 4} ${mx + 5 * s} ${my + 1}`, r, 0.3), 2);
-    const [ex, ey] = eyes[eyes.length - 1];
-    out += st(wob(`M${ex + 9} ${ey - 9}Q${ex + 6} ${ey - 3} ${ex + 9} ${ey - 2}Q${ex + 12} ${ey - 3} ${ex + 9} ${ey - 9}Z`, r, 0.3), 1.4, '#cfe3ff');
-  } else if (mood === 'dead') {
-    out += st(wob(`M${mx - 5 * s} ${my}L${mx + 5 * s} ${my + 1}`, r, 0.5));
-  } else if (mood === 'sleepy') {
-    out += st(blob(mx, my + 1, 1.8 * s, 2.2 * s, r, 0.05), 1.8);
-  } else {
-    out += st(wob(`M${mx - 4.5 * s} ${my}Q${mx} ${my + 4 * s} ${mx + 4.5 * s} ${my}`, r, 0.4));
+  out += `<g class="eyes">${ey}<g class="pupils">${pu}</g></g>`;
+  if ((mood === 'happy' || (big && mood !== 'dead' && mood !== 'scared'))) {
+    out += eyes.map(([ex, y], i) => `<path d="${blob(ex + (eyes.length < 2 ? 3 : i ? 4 : -4) * s, y + 6 * s, 2.6 * s, 1.8 * s, r)}" fill="#e88" opacity="${mood === 'happy' ? 0.55 : 0.35}"/>`).join('');
   }
+  if (mood === 'scared') {
+    const [ex, y] = eyes[eyes.length - 1];
+    out += st(wob(`M${ex + 9} ${y - 9}Q${ex + 6} ${y - 3} ${ex + 9} ${y - 2}Q${ex + 12} ${y - 3} ${ex + 9} ${y - 9}Z`, r, 0.3), 1.4, '#cfe3ff');
+  }
+  if (!mouth) return out;
+  const [mx, my] = mouth;
+  if (mood === 'happy') out += st(wob(`M${mx - 6 * s} ${my - 1}Q${mx} ${my + 8 * s} ${mx + 6 * s} ${my - 1}Z`, r, 0.4), 2, PAPER);
+  else if (mood === 'scared') out += st(wob(`M${mx - 5 * s} ${my + 1}Q${mx - 2.5 * s} ${my - 2} ${mx} ${my + 1}Q${mx + 2.5 * s} ${my + 4} ${mx + 5 * s} ${my + 1}`, r, 0.3), 2);
+  else if (mood === 'dead') out += st(wob(`M${mx - 5 * s} ${my}L${mx + 5 * s} ${my + 1}`, r, 0.5));
+  else if (mood === 'sleepy') out += st(blob(mx, my + 1, 1.8 * s, 2.2 * s, r, 0.05), 1.8);
+  else out += st(wob(`M${mx - 4.5 * s} ${my}Q${mx} ${my + 4 * s} ${mx + 4.5 * s} ${my}`, r, 0.4));
   return out;
 }
 
+// ---------- juegos de piezas ----------
+const SHADE = { w: '#a9bdec', b: '#f0a596' };
+const HATCH = { w: ['#8aa4e2', '#6c88d4'], b: ['#e98f7e', '#d66f5c'] };
+export const SETS = { garabato: { name: 'Garabato', eyes: 'dot', ...PIECES }, bosque: BOSQUE, mar: MAR };
+export let pieceSet = 'garabato';
+export function setPieceSet(name) { if (SETS[name]) pieceSet = name; }
+
+// rayitas de lápiz de color para los rellenos T y D (se insertan una vez en la página)
+export const DEFS = `<svg class="defs" width="0" height="0" aria-hidden="true" style="position:absolute"><defs>${Object.entries(HATCH).map(([c, [a, b]]) =>
+  `<pattern id="hatch-${c}" patternUnits="userSpaceOnUse" width="4.6" height="4.6" patternTransform="rotate(38)"><path d="M0 2.3H4.6" stroke="${a}" stroke-width="1.5" opacity=".55"/></pattern>` +
+  `<pattern id="hatch-${c}-d" patternUnits="userSpaceOnUse" width="4" height="4" patternTransform="rotate(-52)"><path d="M0 2H4" stroke="${b}" stroke-width="1.4" opacity=".6"/></pattern>`).join('')}</defs></svg>`;
+
 const pieceCache = new Map();
 // SVG (sin <svg>) de una pieza en caja 100×100, con sus 3 frames
-export function pieceArt(type, color, mood = 'idle') {
-  const key = type + color + mood;
+export function pieceArt(type, color, mood = 'idle', set = pieceSet) {
+  const key = set + type + color + mood;
   if (pieceCache.has(key)) return pieceCache.get(key);
-  const P = PIECES[type], ink = INK[color], fills = { t: TINT[color], i: ink, p: PAPER, n: 'none' };
+  const S = SETS[set], P = S[type], ink = INK[color], big = S.eyes === 'big';
+  const fills = { t: TINT[color], T: TINT[color], D: SHADE[color], i: ink, p: PAPER, n: 'none', G: '#f6cf55', O: '#f4a340', K: '#f2a7b8' };
   let out = '';
   for (let fr = 0; fr < FRAMES; fr++) {
-    const r = rng(hash(type) + fr * 977), rf = rng(hash(type + 'fill') + fr * 311), rm = rng(hash(mood) + fr * 131);
+    const r = rng(hash(set + type) + fr * 977), rf = rng(hash(set + type + 'fill') + fr * 311), rm = rng(hash(mood) + fr * 131);
     let g = '';
     for (const [shape, fill, w] of P.parts) {
-      const d = typeof shape === 'function' ? shape(r) : wob(shape, r);
-      // relleno "coloreado" un poco fuera de la línea, luego el trazo
-      if (fill !== 'n') g += `<path d="${typeof shape === 'function' ? shape(rf) : wob(shape, rf, 1.6)}" fill="${fills[fill]}"/>`;
+      const d = typeof shape === 'function' ? shape(r) : wob(shape, r, big ? 0.8 : 1.1);
+      // relleno "coloreado" un poco fuera de la línea (con rayitas de lápiz en T y D), luego el trazo
+      if (fill !== 'n') {
+        const fd = typeof shape === 'function' ? shape(rf) : wob(shape, rf, big ? 1.2 : 1.6);
+        g += `<path d="${fd}" fill="${fills[fill]}"/>`;
+        if (fill === 'T' || fill === 'D') g += `<path d="${fd}" fill="url(#hatch-${color}${fill === 'D' ? '-d' : ''})"/>`;
+      }
       g += `<path d="${d}" fill="none" stroke="${ink}" stroke-width="${w}"/>`;
     }
-    out += `<g class="v${fr}">${g}${face(P.face, mood, ink, rm)}</g>`;
+    out += `<g class="v${fr}">${g}${face(P.face, mood, ink, rm, big)}</g>`;
   }
   out = `<g class="art" stroke-linecap="round" stroke-linejoin="round">${out}</g>`;
   pieceCache.set(key, out);
   return out;
 }
 
-export const pieceSVG = (type, color, mood) =>
-  `<svg viewBox="0 0 100 100" aria-hidden="true">${pieceArt(type, color, mood)}</svg>`;
+export const pieceSVG = (type, color, mood, set) =>
+  `<svg viewBox="0 0 100 100" aria-hidden="true">${pieceArt(type, color, mood, set)}</svg>`;
 
 // ---------- tablero ----------
 export function boardArt() {
@@ -280,6 +253,16 @@ export const marks = {
     }[kind];
     return `<path class="emote" d="${wob(E[0], r, 0.8)}" stroke="${E[1]}" fill="${E[2]}" stroke-width="${E[3]}" stroke-linecap="round" stroke-linejoin="round"/>`;
   },
+  sparkle: (x, y, seed) => { // estrellitas que salen al coronar
+    const r = rng(seed), cx = x + 50, cy = y + 50;
+    let d = '';
+    for (let i = 0; i < 8; i++) {
+      const a = i * Math.PI / 4 + r() * 0.3, k = 46 + r() * 14;
+      d += star(cx + Math.cos(a) * k, cy + Math.sin(a) * k, 6 + r() * 4);
+      d += line(cx + Math.cos(a) * 24, cy + Math.sin(a) * 24, cx + Math.cos(a) * 36, cy + Math.sin(a) * 36, r, 1);
+    }
+    return `<path d="${d}" fill="#f6cf55" stroke="${PENCIL}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>`;
+  },
   poof: (x, y, seed) => { // espiral + polvito de captura
     const r = rng(seed), cx = x + 50, cy = y + 50;
     let pts = [];
@@ -367,7 +350,7 @@ export function lapizSVG(mood = 'idle') {
     g += `<g class="m-talk">${face({ ...f, mouth: [50, 200] }, mood === 'sleepy' ? 'sleepy' : 'idle', ink, rm)}<path class="jaw" d="${blob(50, 53.5, 5, 4, rm, 0.08)}" fill="${ink}"/></g>`;
     out += `<g class="v${fr}">${g}</g>`;
   }
-  const svg = `<svg class="lapiz" viewBox="0 0 100 100" aria-hidden="true"><g stroke-linecap="round" stroke-linejoin="round">${out}</g></svg>`;
+  const svg = `<svg class="lapiz" viewBox="0 0 100 100" aria-hidden="true"><g class="art" stroke-linecap="round" stroke-linejoin="round">${out}</g></svg>`;
   lapizCache.set(mood, svg);
   return svg;
 }

@@ -41,7 +41,12 @@ Playful, hecho a mano. Hoja de libreta + pluma azul y roja + lápiz. Para niños
 
 ## Movimiento
 - `--ease-out` en todo; nada de rebotes en botones.
-- Piezas: brinco con arco al mover, puf + espiral al ser comidas, se duermen tras 25 s sin tocar.
+- Piezas: brinco con arco y aplastón al aterrizar, puf + espiral al ser comidas, se duermen tras 25 s sin tocar.
+- Gestos al azar cada 1.5 s (parpadeo, mirar, brinquito, bailecito); temblor con miedo; "no" con la cabeza en jugada ilegal; festejo del ganador; destellos al coronar. Todo vive en el grupo `.art` de cada pieza.
+
+## Juegos de piezas
+- Garabato (original), Bosque y Mar. Los animales usan ojos con brillo, pestañas/cejas, chapitas y relleno con rayitas de lápiz de color (patrones `hatch-*`).
+- Cada bando conserva su tinta (azul/rojo) y su tono: el color del equipo nunca se pierde.
 - El tablero se dibuja solo al empezar una partida.
 - Respeta `prefers-reduced-motion`.
 

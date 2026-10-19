@@ -1,8 +1,8 @@
 // Offline: guarda todo al instalar; luego sirve de la caché y actualiza en segundo plano.
-const CACHE = 'garabato-v3';
+const CACHE = 'garabato-v4';
 const FILES = [
   './', 'index.html', 'manifest.json', 'css/paper.css', 'fonts/patrick-hand.woff2', 'fonts/kalam-bold.woff2',
-  'js/app.js', 'js/art.js', 'js/board.js', 'js/bot.js', 'js/chess.js', 'js/learn.js', 'js/sound.js',
+  'js/app.js', 'js/art.js', 'js/ink.js', 'js/animals.js', 'js/board.js', 'js/bot.js', 'js/chess.js', 'js/learn.js', 'js/sound.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',
   // voz de Lápiz, voces de personajes y música (ElevenLabs)
   'audio/voz/casi.mp3', 'audio/voz/como_b.mp3', 'audio/voz/como_k.mp3', 'audio/voz/como_n.mp3',

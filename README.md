@@ -10,7 +10,11 @@ Ajedrez para jugar en familia, dibujado a pluma sobre una hoja de libreta. Funci
 - **En pareja** en el mismo dispositivo, con opción de girar el tablero en cada turno.
 - **Ayudas por edad**: muchas (5–7: ves los movimientos, las piezas se asustan si están en peligro, deshacer y pistas sin límite), algunas (8–10: 3 deshacer y 3 pistas), pocas (11+).
 - **Aprender a mover**: una lección por pieza ("cómete los renacuajos rojos") y reglas especiales: jaque, jaque mate, enroque, coronar y al paso.
-- Piezas-personaje: renacuajo (peón), castillo de arena (torre), mago (alfil), caballito con crin loca, flor con corona (reina) y sol con bigote (rey). Tiemblan como dibujo vivo y cambian de cara.
+- Tres juegos de piezas-personaje (se eligen en las opciones):
+  - **Garabato**: renacuajo, castillo de arena, mago, caballito, flor con corona y sol con bigote.
+  - **Bosque**: pollito con casco de cascarón, caballito con paliacate, búho con mitra, tortuga que carga un castillo, abeja reina y león con capa.
+  - **Mar**: pececito, caballito de mar, pulpo mago, cangrejo ermitaño con concha-castillo, estrella de mar reina y morsa rey.
+- Las piezas están vivas: tiemblan como dibujo, parpadean, miran a los lados, dan brinquitos, tiemblan de miedo, dicen "no" con la cabeza si la jugada no vale, se aplastan al aterrizar, echan destellos al coronar y el equipo ganador festeja.
 - **Lápiz**, la mascota, habla (voz en español mexicano): lee las lecciones, avisa jaque, explica por qué una jugada no vale, festeja al ganar y da pistas si lo tocas.
 - Cada pieza tiene su voz (el caballito relincha, la reina suena a flor mágica…), música tranquila que se pone nerviosa cuando hay jaque y fanfarria al ganar. Efectos, voz y música se prenden por separado en el menú.
 - La partida se guarda sola y se retoma al volver a abrir.
@@ -42,7 +46,10 @@ y abrir http://localhost:5173. En `localhost` el service worker no se registra p
 |---|---|
 | `js/app.js` | menú, partida, guardado, diálogos |
 | `js/board.js` | tablero SVG, tocar y arrastrar, animaciones |
-| `js/art.js` | todo el arte a mano: piezas, caras, marcas, doodles, íconos |
+| `js/art.js` | arte a mano: juego Garabato, caras, marcas, doodles, íconos, Lápiz |
+| `js/animals.js` | juegos Bosque y Mar |
+| `js/ink.js` | ayudantes de trazo (temblor, curvas, patas, melenas) |
+| `dev/muestras.html` | hoja de muestras de un juego: `dev/muestras.html?set=bosque` |
 | `js/bot.js` | bot alpha-beta (corre en un Web Worker) |
 | `js/learn.js` | lecciones |
 | `js/sound.js` | mezclador: efectos con Web Audio, voz de Lápiz, voces de personajes y música |

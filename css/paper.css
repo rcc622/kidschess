@@ -194,6 +194,7 @@ h2 { font-size: var(--text-xl); text-align: center; }
 .seg { display: flex; gap: var(--space-sm); }
 .seg button { flex: 1 1 0; flex-direction: column; gap: 2px; padding: 8px 6px; min-width: 0; min-height: 64px; }
 .seg button svg:not(.frame) { width: 44px; height: 44px; }
+.art-slot { display: block; line-height: 0; }
 .seg button .ico { width: 32px; height: 32px; }
 .seg button[aria-pressed="true"] { --fill: var(--color-hi); --stroke: 3.6px; }
 .seg.wrap { flex-wrap: wrap; }
@@ -286,6 +287,29 @@ h2 { font-size: var(--text-xl); text-align: center; }
 .pc.sel .pc-in { transform: translateY(-6px) scale(1.08); }
 .pc.drag { pointer-events: none; }
 .pc.drag .pc-in { transform: scale(1.3); }
+/* vida de las piezas: el grupo .art se mueve dentro de su casilla */
+.art { transform-box: fill-box; transform-origin: 50% 92%; }
+.m-scared .art { animation: shiver .16s steps(2) infinite; }
+.m-sleepy .art { animation: breathe 2.6s ease-in-out infinite; animation-delay: var(--d, 0s); }
+.pc.sel .art { animation: hop .45s ease-out; }
+.a-refuse .art { animation: refuse .6s ease-in-out; }
+.a-cheer .art { animation: cheer .45s ease-in-out 8 alternate; animation-delay: var(--d, 0s); }
+.a-dizzy .art { animation: dizzy 1.4s ease-in-out 3; }
+.art.gag-hop { animation: hop .55s ease-out; }
+.art.gag-wiggle { animation: wiggle .7s ease-in-out; }
+.gag-blink .eyes { transform-box: fill-box; transform-origin: center; animation: blink .32s ease-in-out; }
+.gag-look .pupils { animation: look 1.5s ease-in-out; }
+@keyframes shiver { from { transform: translateX(-1.4px); } to { transform: translateX(1.4px); } }
+@keyframes breathe { 50% { transform: scale(1.04, .96); } }
+@keyframes hop { 35% { transform: translateY(-9px) scale(.95, 1.06); } 70% { transform: translateY(0) scale(1.1, .9); } }
+@keyframes refuse { 18% { transform: rotate(-10deg); } 42% { transform: rotate(9deg); } 66% { transform: rotate(-6deg); } 85% { transform: rotate(3deg); } }
+@keyframes cheer { from { transform: translateY(0) scale(1.05, .93); } to { transform: translateY(-14px) scale(.97, 1.05); } }
+@keyframes dizzy { 25% { transform: rotate(-9deg); } 75% { transform: rotate(9deg); } }
+@keyframes wiggle { 25% { transform: rotate(-7deg); } 75% { transform: rotate(7deg); } }
+@keyframes blink { 50% { transform: scaleY(.08); } }
+@keyframes look { 20%, 40% { transform: translateX(-1.7px); } 60%, 80% { transform: translateX(1.7px); } }
+.sparkle { transform-box: fill-box; transform-origin: center; animation: burst 1.2s ease-out forwards; }
+@keyframes burst { from { opacity: 0; transform: scale(.3) rotate(-30deg); } 30% { opacity: 1; } to { opacity: 0; transform: scale(1.25) rotate(20deg); } }
 .poof { transform-box: fill-box; transform-origin: center; animation: poof .55s .15s ease-in forwards; }
 @keyframes poof { to { transform: rotate(260deg) scale(0); opacity: 0; } }
 .dust { transform-box: fill-box; transform-origin: center; opacity: 0; animation: dust .9s .1s ease-out forwards; }

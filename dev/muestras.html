@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Muestras de piezas</title>
+<link rel="stylesheet" href="../css/paper.css">
+<style>
+  html, body { overflow: auto; height: auto; }
+  body { padding: 28px 36px 40px 56px; }
+  h1 { font-family: var(--font-display); font-size: 46px; margin: 0 0 4px; }
+  h2 { text-align: left; font-size: 26px; margin: 22px 0 6px; }
+  .fila { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+  figure { margin: 0; text-align: center; }
+  figure svg { width: var(--size, 200px); height: var(--size, 200px); display: block; background: #fbf8ee; border-radius: 4px; }
+  figcaption { font-size: 20px; color: var(--color-pencil); }
+  .board { width: auto; }
+  .tiny svg { --size: 88px; }
+  .phone svg { --size: 44px; }
+</style>
+</head>
+<body>
+<div id="out"></div>
+<script type="module">
+import { pieceSVG, pieceArt, boardArt, SETS, DEFS } from '../js/art.js';
+document.body.insertAdjacentHTML('afterbegin', DEFS);
+const set = new URLSearchParams(location.search).get('set') || 'bosque';
+const S = SETS[set];
+const NAMES = {
+  garabato: { p: 'Peón · renacuajo', n: 'Caballo · caballito', b: 'Alfil · mago', r: 'Torre · castillo', q: 'Reina · flor', k: 'Rey · sol' },
+  bosque: { p: 'Peón · pollito', n: 'Caballo · caballito', b: 'Alfil · búho', r: 'Torre · tortuga', q: 'Reina · abeja', k: 'Rey · león' },
+  mar: { p: 'Peón · pececito', n: 'Caballo · caballito de mar', b: 'Alfil · pulpo mago', r: 'Torre · cangrejo', q: 'Reina · estrella de mar', k: 'Rey · morsa' },
+}[set];
+const fig = (t, c, m = 'idle', cap = '', size = 200) => `<figure style="--size:${size}px">${pieceSVG(t, c, m, set)}<figcaption>${cap}</figcaption></figure>`;
+const order = ['k', 'q', 'r', 'b', 'n', 'p'];
+let html = `<h1>Juego "${S.name}"</h1>`;
+html += `<h2 class="ink-w">Equipo Azul</h2><div class="fila">${order.map(t => fig(t, 'w', 'idle', NAMES[t])).join('')}</div>`;
+html += `<h2 class="ink-b">Equipo Rojo</h2><div class="fila">${order.map(t => fig(t, 'b', 'idle', NAMES[t])).join('')}</div>`;
+html += `<h2>Caras: normal · feliz · susto · dormido · jaque mate</h2><div class="fila">${['idle', 'happy', 'scared', 'sleepy', 'dead'].map(m => fig('k', 'w', m, '', 116) + fig('q', 'b', m, '', 116)).join('')}</div>`;
+// tamaño real en un tablero de tablet y de teléfono
+const mini = (sq) => {
+  const pos = { a1: 'rw', b1: 'nw', c1: 'bw', d1: 'qw', e1: 'kw', f1: 'bw', g1: 'nw', h1: 'rw', a8: 'rb', b8: 'nb', c8: 'bb', d8: 'qb', e8: 'kb', f8: 'bb', g8: 'nb', h8: 'rb' };
+  for (const f of 'abcdefgh') { pos[f + '2'] = 'pw'; pos[f + '7'] = 'pb'; }
+  let p = '';
+  for (const [s, tc] of Object.entries(pos)) {
+    const x = (s.charCodeAt(0) - 97) * 100, y = (8 - +s[1]) * 100;
+    p += `<g transform="translate(${x} ${y})">${pieceArt(tc[0], tc[1], 'idle', set)}</g>`;
+  }
+  return `<svg viewBox="-30 -30 860 860" style="width:${sq * 8 + 30}px;height:${sq * 8 + 30}px">${boardArt()}${p}</svg>`;
+};
+html += `<h2>Tamaño real: tablet (88 px por casilla) y teléfono (44 px)</h2><div class="fila">${mini(88)}${mini(44)}</div>`;
+document.getElementById('out').innerHTML = html;
+</script>
+</body>
+</html>
