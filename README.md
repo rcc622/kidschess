@@ -6,16 +6,18 @@ Ajedrez para jugar en familia, dibujado a pluma sobre una hoja de libreta. Funci
 
 ## Qué trae
 
-- **Contra el bot**: fácil (a veces se equivoca), medio y difícil. Puedes jugar con azul (empieza), rojo o sorpresa.
+- **Contra el bot**: cinco niveles — dormilón, fácil (a veces se equivoca), medio, difícil y experto (usa libro de aperturas y piensa más). Puedes jugar con azul (empieza), rojo o sorpresa.
 - **En pareja** en el mismo dispositivo, con opción de girar el tablero en cada turno.
 - **Ayudas por edad**: muchas (5–7: ves los movimientos, las piezas se asustan si están en peligro, deshacer y pistas sin límite), algunas (8–10: 3 deshacer y 3 pistas), pocas (11+).
 - **Aprender a mover**: una lección por pieza ("cómete los renacuajos rojos") y reglas especiales: jaque, jaque mate, enroque, coronar y al paso.
 - Piezas-personaje: renacuajo (peón), castillo de arena (torre), mago (alfil), caballito con crin loca, flor con corona (reina) y sol con bigote (rey). Tiemblan como dibujo vivo y cambian de cara.
-- Sonidos hechos con código, la partida se guarda sola y se retoma al volver a abrir.
+- **Lápiz**, la mascota, habla (voz en español mexicano): lee las lecciones, avisa jaque, explica por qué una jugada no vale, festeja al ganar y da pistas si lo tocas.
+- Cada pieza tiene su voz (el caballito relincha, la reina suena a flor mágica…), música tranquila que se pone nerviosa cuando hay jaque y fanfarria al ganar. Efectos, voz y música se prenden por separado en el menú.
+- La partida se guarda sola y se retoma al volver a abrir.
 - Si una jugada no vale, la app explica por qué ("El caballo salta en forma de L", "Tu rey quedaría en peligro").
 - Puntitos que muestran por dónde pasó la última pieza (en L si fue el caballo).
 - Las piezas se duermen si nadie juega un rato, el tablero se dibuja solo al empezar y el menú cuenta las partidas ganadas al bot con palitos.
-- Con la tablet acostada, junto al tablero vive un mundito: el sol o la luna despierta según a quién le toca, un caracol que avanza con las jugadas y notitas en el margen.
+- Con la tablet acostada, junto al tablero vive un mundito: el sol o la luna despierta según a quién le toca, un caracol que avanza con las jugadas, notitas en el margen, una araña que baja mientras el bot piensa y hormigas que cargan a las piezas comidas a dormir.
 
 ## Instalar en el celular o tablet
 
@@ -43,12 +45,14 @@ y abrir http://localhost:5173. En `localhost` el service worker no se registra p
 | `js/art.js` | todo el arte a mano: piezas, caras, marcas, doodles, íconos |
 | `js/bot.js` | bot alpha-beta (corre en un Web Worker) |
 | `js/learn.js` | lecciones |
-| `js/sound.js` | sonidos con Web Audio |
+| `js/sound.js` | mezclador: efectos con Web Audio, voz de Lápiz, voces de personajes y música |
+| `audio/` | voces, efectos y música generados con ElevenLabs (mp3 mono, ya comprimidos) |
 | `js/chess.js` | reglas — [chess.js](https://github.com/jhlywa/chess.js) 1.4.0 (BSD-2) |
 
 ## Créditos
 
 - Reglas: chess.js de Jeff Hlywa (licencia BSD-2, incluida en el archivo).
 - Letras: Patrick Hand de Patrick Wagesreiter y Kalam de Indian Type Foundry (SIL OFL 1.1, ver `fonts/OFL-*.txt`).
+- Voz de Lápiz (voz "Alejandro"), voces de personajes y música: generadas con ElevenLabs.
 - Sistema de diseño: ver `design.md`.
 - Idea visual inspirada en *Ballpoint Gambit* (Kevin Ngo) y *Toadstool Chess*; todo el arte aquí es original, dibujado con código.

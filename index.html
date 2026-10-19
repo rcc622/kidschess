@@ -34,7 +34,7 @@
       </button>
       <button class="mode" data-go="bot">
         <span class="mode-art" data-art="k" data-color="b"></span>
-        <span class="mode-txt"><b>Contra el bot</b><small>Fácil, medio o difícil</small><span class="wins" id="bot-wins"></span></span>
+        <span class="mode-txt"><b>Contra el bot</b><small>De dormilón a experto</small><span class="wins" id="bot-wins"></span></span>
       </button>
       <button class="mode red" data-go="pair">
         <span class="mode-art duo"><i data-art="p" data-color="w"></i><i data-art="p" data-color="b"></i></span>
@@ -45,7 +45,11 @@
         <span class="mode-txt"><b>Aprender a mover</b><small>12 lecciones cortitas</small></span>
       </button>
     </nav>
-    <button class="btn ghost sound-toggle" data-act="sound"></button>
+    <div class="audio-toggles" role="group" aria-label="Sonido">
+      <button class="btn ghost" data-act="fx"></button>
+      <button class="btn ghost" data-act="voice"></button>
+      <button class="btn ghost" data-act="music"></button>
+    </div>
   </main>
 
   <!-- OPCIONES DE PARTIDA -->
@@ -53,10 +57,12 @@
     <h2 id="setup-title">Contra el bot</h2>
     <div class="opt bot-only">
       <p>¿Qué tan difícil?</p>
-      <div class="seg" data-opt="level">
+      <div class="seg wrap" data-opt="level">
+        <button data-val="0" data-art="p" data-mood="sleepy">Dormilón</button>
         <button data-val="1" data-art="p">Fácil</button>
         <button data-val="2" data-art="n">Medio</button>
-        <button data-val="3" data-art="k">Difícil</button>
+        <button data-val="3" data-art="q">Difícil</button>
+        <button data-val="4" data-art="k">Experto</button>
       </div>
     </div>
     <div class="opt bot-only">
@@ -93,8 +99,9 @@
   <section id="game" class="screen" hidden>
     <header class="topbar">
       <button class="btn icon" data-go="menu" aria-label="Menú"><i data-icon="menu"></i></button>
+      <button class="lapiz-btn lapiz-slot" data-act="lapiz" aria-label="Lápiz: pista o ayuda"></button>
       <div id="status" class="status" role="status" aria-live="polite"></div>
-      <button class="btn icon" data-act="sound" aria-label="Sonido"></button>
+      <button class="btn icon" data-act="mute" aria-label="Sonido"></button>
     </header>
     <div class="arena">
       <div class="player" id="p-top"></div>
@@ -124,7 +131,7 @@
     <header class="topbar">
       <button class="btn icon" data-act="lessons" aria-label="Volver a las lecciones"><i data-icon="back"></i></button>
       <h2 id="lesson-title"></h2>
-      <span class="icon-spacer"></span>
+      <button class="lapiz-btn lapiz-slot" data-act="lapiz" aria-label="Lápiz lee la lección"></button>
     </header>
     <p id="lesson-text" class="lesson-text"></p>
     <div class="board-wrap"><svg id="lesson-board" class="board" role="img" aria-label="Tablero de práctica"></svg></div>

@@ -1,7 +1,7 @@
 // Flujo de la app: menú → opciones → partida → fin. Guardado en localStorage.
 import { Chess } from './chess.js';
 import { createBoard } from './board.js';
-import { pieceSVG, pieceArt, boardArt, frame, doodle, icon, skySVG, tallySVG, startBoil } from './art.js';
+import { pieceSVG, pieceArt, boardArt, frame, doodle, icon, skySVG, tallySVG, lapizSVG, spiderSVG, antsSVG, startBoil } from './art.js';
 import * as sound from './sound.js';
 import { initLearn } from './learn.js';
 
@@ -9,7 +9,7 @@ const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const other = c => (c === 'w' ? 'b' : 'w');
 const NAME = { w: 'Azul', b: 'Rojo' };
-const LEVEL = { 1: 'fácil', 2: 'medio', 3: 'difícil' };
+const LEVEL = { 0: 'dormilón', 1: 'fácil', 2: 'medio', 3: 'difícil', 4: 'experto' };
 const VAL = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 100 };
 const PIECE_NAME = { q: 'Reina', r: 'Torre', b: 'Alfil', n: 'Caballo' };
 const HELPS = {
@@ -23,11 +23,12 @@ const KEY = 'ajedrez-garabato-v1';
 const store = (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } })();
 store.opts = { mode: 'bot', level: '1', color: 'w', helps: 'muchas', spin: '0', ...store.opts };
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch { /* modo privado o sin espacio */ } };
-sound.setOn(store.sound !== false);
+store.audio = { fx: true, voice: true, music: true, mute: false, ...store.audio };
+sound.setPrefs(store.audio);
 
 let G = null; // partida en curso: datos guardables + chess, thinking, hint...
 const persist = () => {
-  const { chess, thinking, hinting, hint, spinSide, sleepy, say, oops, ...data } = G;
+  const { chess, thinking, hinting, hint, spinSide, sleepy, say, oops, sayTimer, ...data } = G;
   store.game = data;
   save();
 };
@@ -37,6 +38,7 @@ function show(id) {
   for (const s of $$('.screen')) s.hidden = s.id !== id;
   document.body.dataset.screen = id;
   if (id === 'menu') paintMenu();
+  if (id !== 'game') sound.music('calma');
 }
 
 function paintMenu() {
@@ -81,11 +83,27 @@ function paintSetup() {
   $('#helps-note').textContent = HELPS[o.helps].note;
 }
 
-function paintSound() {
-  for (const b of $$('[data-act="sound"]')) {
-    b.innerHTML = icon(sound.on ? 'sound' : 'mute') + (b.classList.contains('icon') ? '' : `<span>Sonido: ${sound.on ? 'sí' : 'no'}</span>`);
-    b.setAttribute('aria-pressed', sound.on);
+// efectos, voz y música se prenden por separado en el menú; en la partida un solo botón calla todo
+const AUDIO = { fx: ['sound', 'Efectos'], voice: ['voice', 'Voz'], music: ['music', 'Música'] };
+function paintAudio() {
+  const a = store.audio;
+  for (const [k, [ico, label]] of Object.entries(AUDIO)) {
+    const b = $(`[data-act="${k}"]`);
+    b.innerHTML = icon(ico) + `<span>${label}</span>`;
+    b.setAttribute('aria-pressed', a[k]);
   }
+  for (const b of $$('[data-act="mute"]')) {
+    b.innerHTML = icon(a.mute ? 'mute' : 'sound');
+    b.setAttribute('aria-pressed', !a.mute);
+    b.setAttribute('aria-label', a.mute ? 'Prender el sonido' : 'Callar el sonido');
+  }
+}
+function setAudio(k) {
+  store.audio[k] = !store.audio[k];
+  sound.setPrefs(store.audio);
+  save();
+  paintAudio();
+  sound.play('select');
 }
 
 // ---------- partida ----------
@@ -103,10 +121,12 @@ function loadGame(data, intro = false) {
   const chess = new Chess();
   try { data.moves.forEach(m => chess.move(m)); } catch { data.moves = chess.history({ verbose: true }).map(m => m.lan); }
   G = { ...data, chess, thinking: false, hinting: false, hint: null, spinSide: chess.turn() };
+  lastTouch = Date.now();
   $('#dialog').hidden = true;
   show('game');
   render(intro ? { intro: true } : undefined);
   if (!chess.isGameOver() && !humanTurn()) setTimeout(botTurn, intro ? 1400 : 0);
+  else if (intro) setTimeout(() => G.chess === chess && sound.say(G.mode === 'pair' ? 'turno_azul' : 'te_toca'), 1300);
 }
 
 const view = createBoard($('#board'), {
@@ -118,10 +138,12 @@ const view = createBoard($('#board'), {
   move: humanMove,
   showTargets: () => HELPS[G.helps].moves,
   sound: sound.play,
+  select: sq => sound.creature(G.chess.get(sq)?.type),
   miss(from, to) {
     sound.play('bonk');
-    const g = G;
-    g.say = whyIllegal(g.chess, from, to);
+    const g = G, why = whyIllegal(g.chess, from, to);
+    sound.say(why.key);
+    g.say = why.text;
     g.oops = { sq: from, kind: '?' };
     render();
     clearTimeout(g.sayTimer);
@@ -130,30 +152,41 @@ const view = createBoard($('#board'), {
 });
 
 // explica con palabras de niño por qué esa jugada no vale
-const HOW = {
-  p: 'El peón camina derecho y solo come en diagonal.',
-  n: 'El caballo salta en forma de L.',
-  b: 'El alfil solo va en diagonal.',
-  r: 'La torre solo va en línea recta.',
-  q: 'La reina va en línea recta o en diagonal.',
-  k: 'El rey camina de una en una casilla.',
+const WHY = {
+  como_p: 'El peón camina derecho y solo come en diagonal.',
+  como_n: 'El caballo salta en forma de L.',
+  como_b: 'El alfil solo va en diagonal.',
+  como_r: 'La torre solo va en línea recta.',
+  como_q: 'La reina va en línea recta o en diagonal.',
+  como_k: 'El rey camina de una en una casilla.',
+  ilegal_jaque: '¡Tu rey está en jaque! Primero tienes que salvarlo.',
+  ilegal_peligro: 'No se puede: tu rey quedaría en peligro.',
+  ilegal_enroque: 'Para enrocar, ni el rey ni la torre deben haberse movido, y el camino debe estar libre.',
+  ilegal_enfrente: 'Hay alguien enfrente: el peón no puede pasar.',
+  ilegal_diagonal: 'El peón solo va en diagonal cuando come.',
+  ilegal_camino: 'Hay alguien en el camino.',
 };
+// devuelve { key, text }: key es el audio de Lápiz con la misma frase
 function whyIllegal(c, from, to) {
+  const key = reason(c, from, to);
+  return { key, text: WHY[key] || '' };
+}
+function reason(c, from, to) {
   const p = c.get(from);
   if (!p) return '';
   const sqName = n => 'abcdefgh'[n & 15] + (8 - (n >> 4));
   // ponytail: _moves es interno de chess.js (copiado local, versión fija)
   const pseudo = c._moves({ legal: false, square: from }).some(m => sqName(m.to) === to);
-  if (c.inCheck()) return '¡Tu rey está en jaque! Primero tienes que salvarlo.';
-  if (pseudo) return 'No se puede: tu rey quedaría en peligro.';
+  if (c.inCheck()) return 'ilegal_jaque';
+  if (pseudo) return 'ilegal_peligro';
   const dx = to.charCodeAt(0) - from.charCodeAt(0), dy = +to[1] - +from[1], ax = Math.abs(dx), ay = Math.abs(dy);
-  if (p.type === 'k' && ax === 2 && !dy) return 'Para enrocar, ni el rey ni la torre deben haberse movido, y el camino debe estar libre.';
+  if (p.type === 'k' && ax === 2 && !dy) return 'ilegal_enroque';
   const ahead = dy * (p.color === 'w' ? 1 : -1) > 0;
-  if (p.type === 'p' && !dx && ahead && ay <= 2) return 'Hay alguien enfrente: el peón no puede pasar.';
-  if (p.type === 'p' && ax === 1 && ay === 1 && ahead) return 'El peón solo va en diagonal cuando come.';
+  if (p.type === 'p' && !dx && ahead && ay <= 2) return 'ilegal_enfrente';
+  if (p.type === 'p' && ax === 1 && ay === 1 && ahead) return 'ilegal_diagonal';
   const line = !dx || !dy, diag = ax === ay;
-  if ((p.type === 'r' && line) || (p.type === 'b' && diag) || (p.type === 'q' && (line || diag))) return 'Hay alguien en el camino.';
-  return HOW[p.type];
+  if ((p.type === 'r' && line) || (p.type === 'b' && diag) || (p.type === 'q' && (line || diag))) return 'ilegal_camino';
+  return `como_${p.type}`;
 }
 
 async function humanMove(from, to, dragged) {
@@ -172,6 +205,7 @@ function play(m, dragged = false) {
   try { mv = c.move(m); } catch { return render(); }
   g.hint = null;
   g.moves.push(mv.lan);
+  lastTouch = Date.now();
   const castle = mv.isKingsideCastle() || mv.isQueensideCastle();
   const anim = { moves: dragged ? [] : [{ from: mv.from, to: mv.to }] };
   if (castle) {
@@ -180,6 +214,9 @@ function play(m, dragged = false) {
   }
   if (mv.captured) anim.captured = { type: mv.captured, color: other(mv.color), sq: mv.isEnPassant() ? mv.to[0] + mv.from[1] : mv.to };
   sound.play(c.inCheck() && !c.isCheckmate() ? 'check' : mv.captured ? 'capture' : castle ? 'castle' : mv.promotion ? 'promote' : 'move');
+  if (mv.captured) sound.creature('ay');
+  if (c.inCheck() && !c.isCheckmate()) sound.say(g.mode === 'bot' && c.turn() !== g.human ? 'jaque_bot' : 'jaque_tu');
+  else if (g.mode === 'pair' && !c.isGameOver()) sound.say(c.turn() === 'w' ? 'turno_azul' : 'turno_rojo');
   persist();
   render(anim);
   if (g.mode === 'pair' && g.spin === '1') {
@@ -241,6 +278,7 @@ async function hint() {
   g.hinting = false;
   if (G !== g || g.moves.length !== n) return;
   g.hint = m;
+  sound.say('pista');
   persist();
   render();
 }
@@ -293,7 +331,9 @@ function render(anim) {
     pieces, emotes, flipped: flipped(), check: check ? kings[turn] : null, hint: G.hint, anim,
     last: last && { from: last.from, to: last.to, color: last.color, knight: last.piece === 'n' },
   });
-  world(c, turn, over);
+  world(c, turn, over, hist);
+  const won = over && c.isCheckmate() && (G.mode === 'pair' || other(turn) === G.human);
+  sound.music(won ? 'victoria' : check && !over ? 'tension' : 'calma');
 
   let s;
   if (G.say && !over) s = `<span class="say">${G.say}</span>`;
@@ -335,15 +375,21 @@ const NOTES = [
   ['¿Un descanso?', '¡Una jugada más!'],
   ['Cuida a tu rey', 'Cuida tú al tuyo'],
 ];
-function world(c, turn, over) {
+const put = (el, html) => { if (el._h !== html) { el.innerHTML = html; el._h = html; } };
+function world(c, turn, over, hist) {
   const el = $('#world');
   if (getComputedStyle(el).display === 'none') return;
+  if (!el.firstElementChild) el.innerHTML = '<div class="sky-row"></div><div class="snail-path"></div><div class="nap"></div><div class="w-note"></div>' + spiderSVG();
+  const [sky, snail, nap, note] = el.children;
   const plies = G.moves.length, x = 14 + Math.min(plies, 100) * 2.3;
-  const note = plies >= 6 ? NOTES[(Math.floor(plies / 6) - 1) % NOTES.length] : null;
-  el.innerHTML = `
-    <div class="sky-row">${skySVG('sun', turn === 'w' && !over)}${skySVG('moon', turn === 'b' && !over)}</div>
-    <div class="snail-path"><svg viewBox="0 0 270 56" aria-hidden="true"><path d="M8 50L262 50" stroke="currentColor" stroke-width="2.4" stroke-dasharray="2 9" stroke-linecap="round"/><g transform="translate(${x} 2) scale(.66)">${doodle('snail')}</g></svg><small>jugada ${Math.ceil(plies / 2) || 0}</small></div>
-    ${note ? `<p class="sticky"><span class="ink-w">${note[0]}</span><span class="ink-b">${note[1]}</span></p>` : ''}`;
+  const n = plies >= 6 ? NOTES[(Math.floor(plies / 6) - 1) % NOTES.length] : null;
+  put(sky, skySVG('sun', turn === 'w' && !over) + skySVG('moon', turn === 'b' && !over));
+  put(snail, `<svg viewBox="0 0 270 56" aria-hidden="true"><path d="M8 50L262 50" stroke="currentColor" stroke-width="2.4" stroke-dasharray="2 9" stroke-linecap="round"/><g transform="translate(${x} 2) scale(.66)">${doodle('snail')}</g></svg><small>jugada ${Math.ceil(plies / 2) || 0}</small>`);
+  // las piezas comidas se van a dormir; la última llega cargada por hormigas
+  const caps = hist.filter(m => m.captured).map(m => [m.captured, other(m.color)]).slice(-8);
+  put(nap, caps.map(([t, col], i) => `<span class="napper${i === caps.length - 1 ? ' carried' : ''}">${pieceSVG(t, col, 'sleepy')}${i === caps.length - 1 ? antsSVG() : ''}</span>`).join(''));
+  put(note, n ? `<p class="sticky"><span class="ink-w">${n[0]}</span><span class="ink-b">${n[1]}</span></p>` : '');
+  el.classList.toggle('thinking', !!G.thinking);
 }
 
 function gameOver() {
@@ -353,7 +399,8 @@ function gameOver() {
     store.results = [{ level: G.level, r: r.happy ? 'w' : r.win ? 'l' : 'd' }, ...(store.results || [])].slice(0, 200);
     save();
   }
-  sound.play(!r.win ? 'draw' : r.happy ? 'win' : 'lose');
+  if (!r.win) sound.play('draw'); else if (!r.happy) sound.play('lose');
+  sound.say(!r.win ? 'tablas' : G.mode === 'pair' ? (r.win === 'w' ? 'mate_azul' : 'mate_rojo') : r.happy ? 'mate_ganaste' : 'mate_bot');
   if (r.happy) confetti();
   dialog({
     title: r.title,
@@ -394,6 +441,7 @@ $('#dialog').addEventListener('click', e => { if (e.target.id === 'dialog') clos
 addEventListener('keydown', e => { if (e.key === 'Escape') closeDialog(); });
 
 function pickPromotion(color) {
+  sound.say('coronar');
   return new Promise(res => dialog({
     title: '¡Llegaste al final!',
     text: '¿En qué se convierte tu peón?',
@@ -426,19 +474,35 @@ function drawDoodles() {
 // si nadie toca la pantalla un rato, las piezas del que juega se duermen
 let lastTouch = Date.now();
 addEventListener('pointerdown', () => {
+  sound.unlock();
   lastTouch = Date.now();
   if (G?.sleepy) { G.sleepy = false; render(); }
 }, true);
 setInterval(() => {
   if (!G || G.sleepy || document.body.dataset.screen !== 'game' || G.thinking || G.chess.isGameOver() || !humanTurn()) return;
-  if (Date.now() - lastTouch > 25000) { G.sleepy = true; render(); }
+  if (Date.now() - lastTouch > 25000) { G.sleepy = true; render(); sound.say('dormido'); }
 }, 5000);
 
 // ---------- arranque ----------
 const learn = initLearn({ show, pickPromotion, sound, whyIllegal });
 
+// Lápiz: en el menú saluda; en la partida da una pista si se puede, si no recuerda de quién es el turno
+function tapLapiz() {
+  const scr = document.body.dataset.screen;
+  if (scr === 'lesson') return learn.speak();
+  if (scr !== 'game' || !G) return sound.say('hola');
+  if (canHint()) return hint();
+  if (G.chess.isGameOver()) return;
+  sound.say(G.thinking ? 'hola' : G.mode === 'pair' ? (G.chess.turn() === 'w' ? 'turno_azul' : 'turno_rojo') : 'te_toca');
+}
+sound.setOnTalk(on => document.body.classList.toggle('talking', on));
+
 const actions = {
-  sound() { sound.setOn(!sound.on); store.sound = sound.on; save(); paintSound(); sound.play('select'); },
+  fx: () => setAudio('fx'),
+  voice: () => setAudio('voice'),
+  music: () => setAudio('music'),
+  mute: () => setAudio('mute'),
+  lapiz: tapLapiz,
   start: newGame,
   undo,
   hint,
@@ -489,8 +553,9 @@ new MutationObserver(list => {
     for (const el of n.querySelectorAll(FRAMED)) addFrame(el);
   }
 }).observe(document.body, { childList: true, subtree: true });
-$('.hero').innerHTML = pieceSVG('k', 'w', 'happy') + pieceSVG('p', 'b') + pieceSVG('q', 'b', 'happy');
-paintSound();
+$('.hero').innerHTML = pieceSVG('k', 'w', 'happy') + `<button class="lapiz-btn hero-lapiz" data-act="lapiz" aria-label="Lápiz te saluda">${lapizSVG('happy')}</button>` + pieceSVG('q', 'b', 'happy');
+for (const el of $$('.lapiz-slot')) el.innerHTML = lapizSVG();
+paintAudio();
 drawDoodles();
 addEventListener('resize', drawDoodles);
 startBoil();

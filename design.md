@@ -33,6 +33,12 @@ Playful, hecho a mano. Hoja de libreta + pluma azul y roja + lápiz. Para niños
 - **Iconos:** trazos propios en `art.js` (`icon()`), nunca emoji.
 - **Menú:** primero el dibujo, luego la palabra (los peques todavía no leen bien).
 
+## Lápiz (mascota) y sonido
+- Lápiz es un lápiz amarillo con borrador rosa y cara; vive en la portada y en la barra de la partida y las lecciones.
+- Cuando habla, se mueve y abre la boca. Tocarlo: saluda (menú), da pista (partida), relee (lección).
+- Toda frase que Lápiz dice también está escrita en pantalla: el audio nunca es la única forma de enterarse.
+- Música bajita (calma / tensión en jaque / victoria); baja más cuando Lápiz habla.
+
 ## Movimiento
 - `--ease-out` en todo; nada de rebotes en botones.
 - Piezas: brinco con arco al mover, puf + espiral al ser comidas, se duermen tras 25 s sin tocar.

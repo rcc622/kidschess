@@ -38,6 +38,8 @@ const WIN = {
   promote: () => '¡Se convirtió!',
   ep: () => '¡Al paso! Ese truco casi nadie lo conoce.',
 };
+// audio de Lápiz para cada logro (audio/voz/win_*.mp3)
+const WIN_VOICE = { eat: 'win_eat', check: 'win_check', mate: 'win_mate', castle: 'win_castle', promote: 'win_promote', ep: 'win_ep' };
 
 const KEY = 'ajedrez-garabato-lecciones';
 const doneSet = (() => { try { return new Set(JSON.parse(localStorage.getItem(KEY)) || []); } catch { return new Set(); } })();
@@ -52,9 +54,12 @@ export function initLearn({ show, pickPromotion, sound, whyIllegal }) {
     move,
     showTargets: () => true,
     sound: sound.play,
+    select: sq => sound.creature(L.chess.get(sq)?.type),
     miss(from, to) {
       sound.play('bonk');
-      $('#lesson-msg').textContent = whyIllegal(L.chess, from, to);
+      const why = whyIllegal(L.chess, from, to);
+      $('#lesson-msg').textContent = why.text;
+      sound.say(why.key);
     },
   });
 
@@ -72,13 +77,14 @@ export function initLearn({ show, pickPromotion, sound, whyIllegal }) {
     $('[data-act="lesson-next"]').classList.toggle('hi', L.done);
   }
 
-  function start(i) {
+  function start(i, speak = true) {
     L = { i, chess: new Chess(LESSONS[i].fen, { skipValidation: true }), count: 0, done: false, last: null };
     $('#lesson-title').textContent = LESSONS[i].title;
     $('#lesson-text').textContent = LESSONS[i].text;
     $('#lesson-msg').textContent = '';
     show('lesson');
     draw();
+    if (speak) sound.say(`lec_${i}`);
   }
 
   async function move(from, to, dragged) {
@@ -102,7 +108,8 @@ export function initLearn({ show, pickPromotion, sound, whyIllegal }) {
     if (ok) {
       L.done = true;
       msg.textContent = WIN[les.goal](L.count);
-      sound.play('win');
+      sound.say(WIN_VOICE[les.goal]);
+      sound.play('promote');
       doneSet.add(L.i);
       try { localStorage.setItem(KEY, JSON.stringify([...doneSet])); } catch { /* sin guardado */ }
     } else if (les.goal === 'eat') {
@@ -112,11 +119,13 @@ export function initLearn({ show, pickPromotion, sound, whyIllegal }) {
       c.load(f.join(' '), { skipValidation: true });
       msg.textContent = mv.captured ? `¡Ñam! Quedan ${reds()}.` : '';
       sound.play(mv.captured ? 'capture' : 'move');
+      if (mv.captured) { sound.creature('ay'); sound.say('nam'); }
     } else {
       msg.textContent = 'Casi… ¡intenta otra vez!';
       sound.play('bonk');
+      sound.say('casi');
       const l = L;
-      setTimeout(() => { if (L === l) start(l.i); }, 1300);
+      setTimeout(() => { if (L === l) start(l.i, false); }, 1300);
       L.done = true; // bloquea el tablero mientras se reinicia
     }
     draw(anim);
@@ -137,6 +146,7 @@ export function initLearn({ show, pickPromotion, sound, whyIllegal }) {
   return {
     open,
     reset: () => L && start(L.i),
+    speak: () => L && sound.say(`lec_${L.i}`),
     next: () => (L && L.i + 1 < LESSONS.length ? start(L.i + 1) : open()),
   };
 }

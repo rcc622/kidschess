@@ -121,7 +121,7 @@ export function createBoard(svg, cb) {
     }
     if (cb.pick(sq)) {
       const wasSel = sel === sq;
-      if (!wasSel) { cb.sound?.('select'); select(sq); }
+      if (!wasSel) { cb.sound?.('select'); cb.select?.(sq); select(sq); }
       drag = { from: sq, x: e.clientX, y: e.clientY, moved: false, wasSel, el: null };
       svg.setPointerCapture?.(e.pointerId);
       return;

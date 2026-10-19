@@ -339,6 +339,65 @@ export function tallySVG(n) {
   return `<svg class="tally" viewBox="0 0 ${w} 32" width="${w * 0.8}" height="26" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>`;
 }
 
+// ---------- Lápiz: la mascota que habla, explica y da pistas ----------
+const LAPIZ = [
+  ['M35 16Q35 4 50 4Q65 4 65 16Z', '#f4a3a8', 3],                // borrador
+  ['M33 16L67 16L67 25L33 25Z', '#cdd2de', 3],                     // casquillo
+  ['M34 25L66 25L66 70L34 70Z', '#ffd86b', 3.2],                    // cuerpo
+  ['M44 26L44 69M56 26L56 69', 'none', 1.6],                        // aristas
+  ['M34 70L66 70L50 95Z', '#f3d3a0', 3],                            // madera
+  ['M45 87L55 87L50 95Z', PENCIL, 2],                               // punta
+  ['M34 47Q24 46 19 37M66 47Q76 48 81 41', 'none', 3],              // bracitos
+];
+const lapizCache = new Map();
+export function lapizSVG(mood = 'idle') {
+  if (lapizCache.has(mood)) return lapizCache.get(mood);
+  const ink = INK.w;
+  let out = '';
+  for (let fr = 0; fr < FRAMES; fr++) {
+    const r = rng(hash('lapiz') + fr * 59), rf = rng(hash('lapiz-fill') + fr * 7), rm = rng(hash('lapiz' + mood) + fr * 3);
+    let g = '';
+    for (const [d, fill, w] of LAPIZ) {
+      if (fill !== 'none') g += `<path d="${wob(d, rf, 1.4)}" fill="${fill}"/>`;
+      g += `<path d="${wob(d, r, 0.9)}" fill="none" stroke="${ink}" stroke-width="${w}"/>`;
+    }
+    const f = { eyes: [[43, 41], [57, 41]], mouth: [50, 52], s: 1 };
+    g += `<g class="m-rest">${face(f, mood, ink, rm)}</g>`;
+    // boca abierta para cuando habla (CSS la alterna)
+    g += `<g class="m-talk">${face({ ...f, mouth: [50, 200] }, mood === 'sleepy' ? 'sleepy' : 'idle', ink, rm)}<path class="jaw" d="${blob(50, 53.5, 5, 4, rm, 0.08)}" fill="${ink}"/></g>`;
+    out += `<g class="v${fr}">${g}</g>`;
+  }
+  const svg = `<svg class="lapiz" viewBox="0 0 100 100" aria-hidden="true"><g stroke-linecap="round" stroke-linejoin="round">${out}</g></svg>`;
+  lapizCache.set(mood, svg);
+  return svg;
+}
+
+// araña que baja de su hilo mientras el bot piensa
+export function spiderSVG() {
+  let out = '';
+  for (let fr = 0; fr < FRAMES; fr++) {
+    const r = rng(77 + fr * 13);
+    const legs = [-1, 1].map(sd => [0, 1, 2, 3].map(i => wob(`M${30 + sd * 6} ${52 + i * 4}Q${30 + sd * 16} ${44 + i * 6} ${30 + sd * 20} ${54 + i * 7}`, r, 1)).join('')).join('');
+    out += `<g class="v${fr}"><path d="${legs}" stroke="${PENCIL}" stroke-width="2.4" fill="none"/><path d="${blob(30, 58, 9, 10, r, 0.06)}" fill="${PENCIL}"/><path d="${blob(26.5, 55, 2, 2.2, r)}${blob(33.5, 55, 2, 2.2, r)}" fill="${PAPER}"/></g>`;
+  }
+  return `<svg class="spider" viewBox="0 -100 60 180" aria-hidden="true"><path d="M30 -100L30 48" stroke="${PENCIL}" stroke-width="1.4"/>${out}</svg>`;
+}
+
+// hormiguitas que cargan a la pieza comida hasta su siesta
+export function antsSVG() {
+  let out = '';
+  for (let fr = 0; fr < FRAMES; fr++) {
+    const r = rng(31 + fr * 17);
+    let d = '';
+    for (const x of [14, 46, 78]) {
+      d += blob(x, 14, 3.4, 2.6, r) + blob(x + 6, 14, 2.6, 2.3, r) + blob(x - 6, 13, 2.2, 2, r);
+      for (const k of [-4, 0, 4]) d += wob(`M${x + k} 15L${x + k + (fr - 1) * 2.5} 22`, r, 0.6);
+    }
+    out += `<path class="v${fr}" d="${d}" fill="${PENCIL}" stroke="${PENCIL}" stroke-width="1.6"/>`;
+  }
+  return `<svg class="ants" viewBox="0 0 92 24" aria-hidden="true">${out}</svg>`;
+}
+
 // ---------- íconos de botones ----------
 const ICONS = {
   menu: 'M6 9L26 8M6 16L26 16M6 23L26 24',
@@ -349,6 +408,8 @@ const ICONS = {
   mute: 'M4 12L9 12L16 6L16 26L9 20L4 20ZM21 12L28 20M28 12L21 20',
   back: 'M14 7L5 16L14 25M5 16L27 16',
   board: 'M5 5L27 5L27 27L5 27ZM5 16L27 16M16 5L16 27',
+  voice: 'M5 8Q5 4 9 4L24 4Q28 4 28 8L28 17Q28 21 24 21L14 21L8 27L9 21Q5 21 5 17ZM11 12L22 12M11 15L18 15',
+  music: 'M7 25C7 21 14 21 14 24C14 28 7 29 7 25ZM14 24L14 7L26 4L26 20M26 20C26 16 19 16 19 19C19 23 26 24 26 20ZM14 11L26 8',
   again: 'M26 16C26 23 21 27 16 27C10 27 5 22 5 16C5 10 10 5 16 5C20 5 23 7 25 10M25 3L25 10L18 10',
 };
 

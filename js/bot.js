@@ -19,11 +19,39 @@ const PST = {
 };
 
 export const LEVELS = {
-  1: { depth: 1, qs: false, noise: 80, blunder: 0.25, time: 1000 }, // a veces "se equivoca"
-  2: { depth: 2, qs: true, noise: 25, blunder: 0.04, time: 2000 },
-  3: { depth: 6, qs: true, noise: 0, blunder: 0, time: 1600 },
+  0: { depth: 1, qs: false, noise: 150, blunder: 0.5, time: 800 },          // dormilón: casi al azar
+  1: { depth: 1, qs: false, noise: 80, blunder: 0.25, time: 1000 },         // fácil: a veces "se equivoca"
+  2: { depth: 2, qs: true, noise: 25, blunder: 0.04, time: 2000, book: true },
+  3: { depth: 6, qs: true, noise: 0, blunder: 0, time: 1600, book: true },
+  4: { depth: 12, qs: true, noise: 0, blunder: 0, time: 3500, book: true }, // experto: piensa más
   hint: { depth: 5, qs: true, noise: 0, blunder: 0, time: 1200 },
 };
+
+// libro de aperturas: así los niveles altos empiezan como en las partidas de verdad
+const BOOK = [
+  'e2e4 e7e5 g1f3 b8c6 f1c4 f8c5 c2c3 g8f6 d2d3 d7d6',      // italiana
+  'e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5a4 g8f6 e1g1 f8e7',      // española
+  'e2e4 e7e5 g1f3 b8c6 d2d4 e5d4 f3d4 g8f6 b1c3 f8b4',      // escocesa
+  'e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 a7a6',      // siciliana
+  'e2e4 c7c5 g1f3 b8c6 d2d4 c5d4 f3d4 g8f6 b1c3 e7e5',
+  'e2e4 e7e6 d2d4 d7d5 b1c3 g8f6 c1g5 f8e7 e4e5 f6d7',      // francesa
+  'e2e4 c7c6 d2d4 d7d5 b1c3 d5e4 c3e4 c8f5 e4g3 f5g6',      // caro-kann
+  'e2e4 d7d5 e4d5 d8d5 b1c3 d5a5 d2d4 g8f6 g1f3 c8f5',      // escandinava
+  'd2d4 d7d5 c2c4 e7e6 b1c3 g8f6 c1g5 f8e7 e2e3 e8g8',      // gambito de dama
+  'd2d4 d7d5 c2c4 c7c6 g1f3 g8f6 b1c3 d5c4 a2a4 c8f5',      // eslava
+  'd2d4 g8f6 c2c4 e7e6 b1c3 f8b4 e2e3 e8g8 f1d3 d7d5',      // nimzoindia
+  'd2d4 g8f6 c2c4 g7g6 b1c3 f8g7 e2e4 d7d6 g1f3 e8g8',      // india de rey
+  'd2d4 d7d5 g1f3 g8f6 c1f4 e7e6 e2e3 c7c5 c2c3 b8c6',      // londres
+  'c2c4 e7e5 b1c3 g8f6 g1f3 b8c6 g2g3 d7d5 c4d5 f6d5',      // inglesa
+  'g1f3 d7d5 g2g3 g8f6 f1g2 e7e6 e1g1 f8e7 d2d3 e8g8',      // réti
+].map(l => l.split(' '));
+
+function bookMove(moves) {
+  const n = moves.length, next = new Set();
+  for (const line of BOOK) if (line.length > n && moves.every((m, i) => m === line[i])) next.add(line[n]);
+  const opts = [...next];
+  return opts.length ? opts[Math.floor(Math.random() * opts.length)] : null;
+}
 
 const idx = (sq, white) => (white ? sq >> 4 : 7 - (sq >> 4)) * 8 + (sq & 7);
 const centerDist = sq => Math.max(3 - (sq & 7), (sq & 7) - 4) + Math.max(3 - (sq >> 4), (sq >> 4) - 4);
@@ -102,9 +130,11 @@ const sqName = sq => 'abcdefgh'[sq & 7] + (8 - (sq >> 4));
 
 // moves = jugadas en LAN desde la posición inicial (así el bot conoce las repeticiones)
 export function think(moves, level) {
+  const cfg = LEVELS[level] || LEVELS[1];
+  const book = cfg.book && bookMove(moves);
+  if (book) return { from: book.slice(0, 2), to: book.slice(2, 4), promotion: book[4] };
   const g = new Chess();
   for (const m of moves) g.move(m);
-  const cfg = LEVELS[level];
   const root = g._moves({ legal: true });
   for (let i = root.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [root[i], root[j]] = [root[j], root[i]]; }
   let pick = root[0];
