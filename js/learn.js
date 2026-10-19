@@ -1,7 +1,7 @@
 // "Aprender a mover": una lección por pieza (cómete a los rojos) + reglas especiales.
 import { Chess } from './chess.js';
 import { createBoard } from './board.js';
-import { pieceSVG, pieceSet } from './art.js';
+import { pieceSVG, pieceSet, scheme, SCHEMES } from './art.js';
 
 const LESSONS = [
   { art: 'p', title: 'El peón', goal: 'eat', fen: '8/8/8/8/2p5/3p4/4P3/8 w - - 0 1',
@@ -48,14 +48,41 @@ const THEMED = {
     'La estrella de mar reina es la más poderosa: se mueve como torre y como alfil juntos. Cómete a los rojos.',
     'La morsa rey camina una casilla hacia cualquier lado. Nunca puede pararse donde la atacan. Cómete a los rojos.',
   ],
+  robots: [
+    'El robotito rueda derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal! Cómete a los rojos.',
+    'El robot castillo avanza en línea recta: adelante, atrás y a los lados, todas las casillas que quiera. Cómete a los rojos.',
+    'El dron vuela en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color! Cómete a los rojos.',
+    'El caballo robot salta en forma de L: dos casillas derecho y una de lado. ¡Es el único que puede saltar sobre otras piezas! Cómete a los rojos.',
+    'La reina robot es la más poderosa: se mueve como torre y como alfil juntos. Cómete a los rojos.',
+    'El rey robot camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan. Cómete a los rojos.',
+  ],
+  dinos: [
+    'El dino bebé camina derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal! Cómete a los rojos.',
+    'El triceratops embiste en línea recta: adelante, atrás y a los lados, todas las casillas que quiera. Cómete a los rojos.',
+    'El braquiosaurio estira el cuello en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color! Cómete a los rojos.',
+    'El pterodáctilo vuela en forma de L: dos casillas derecho y una de lado. ¡Es el único que puede pasar sobre otras piezas! Cómete a los rojos.',
+    'La estegosaurio reina es la más poderosa: se mueve como torre y como alfil juntos. Cómete a los rojos.',
+    'El tiranosaurio rey camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan. Cómete a los rojos.',
+  ],
+  espacio: [
+    'El marcianito flota derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal! Cómete a los rojos.',
+    'El astronauta avanza en línea recta: adelante, atrás y a los lados, todas las casillas que quiera. Cómete a los rojos.',
+    'El ovni vuela en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color! Cómete a los rojos.',
+    'El cohete salta en forma de L: dos casillas derecho y una de lado. ¡Es el único que puede saltar sobre otras piezas! Cómete a los rojos.',
+    'La luna reina es la más poderosa: se mueve como torre y como alfil juntos. Cómete a los rojos.',
+    'El rey Saturno camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan. Cómete a los rojos.',
+  ],
 };
 const themed = i => THEMED[pieceSet]?.[i];
-const lessonText = i => themed(i) || LESSONS[i].text;
-const lessonVoice = i => (themed(i) ? `lec_${i}_${pieceSet}` : `lec_${i}`);
+// los textos nombran a "los rojos"; con otros colores de piezas se cambian por los del esquema
+const recolor = t => (scheme === 'tinta' ? t : t.replace('los rojos', SCHEMES[scheme].them).replace(/(rey|peón) rojo/g, `$1 ${SCHEMES[scheme].foe}`));
+const lessonText = i => recolor(themed(i) || LESSONS[i].text);
+// con otros colores se usa el audio sin la última frase ("…a los rojos"), que queda escrita en pantalla
+const lessonVoice = i => (themed(i) ? `lec_${i}_${pieceSet}` : `lec_${i}`) + (scheme !== 'tinta' && i <= 6 ? '_x' : '');
 
 const WIN = {
   eat: n => `¡Te los comiste todos en ${n} jugadas!`,
-  check: () => '¡Jaque! El rey rojo está en peligro.',
+  check: () => recolor('¡Jaque! El rey rojo está en peligro.'),
   mate: () => '¡Jaque mate! Así se gana una partida.',
   castle: () => '¡Enroque! El rey quedó protegido.',
   promote: () => '¡Se convirtió!',
@@ -77,7 +104,7 @@ export function initLearn({ show, pickPromotion, sound, whyIllegal }) {
     move,
     showTargets: () => true,
     sound: sound.play,
-    select: sq => sound.creature(L.chess.get(sq)?.type),
+    select: sq => sound.creature(L.chess.get(sq)?.type, pieceSet),
     miss(from, to) {
       sound.play('bonk');
       const why = whyIllegal(L.chess, from, to);
@@ -108,7 +135,7 @@ export function initLearn({ show, pickPromotion, sound, whyIllegal }) {
     $('#lesson-msg').textContent = '';
     show('lesson');
     draw();
-    if (speak) sound.say(lessonVoice(i));
+    if (speak) sound.say(lessonVoice(i), lessonText(i));
   }
 
   async function move(from, to, dragged) {
@@ -172,7 +199,7 @@ export function initLearn({ show, pickPromotion, sound, whyIllegal }) {
   return {
     open,
     reset: () => L && start(L.i),
-    speak: () => L && sound.say(lessonVoice(L.i)),
+    speak: () => L && sound.say(lessonVoice(L.i), lessonText(L.i)),
     next: () => (L && L.i + 1 < LESSONS.length ? start(L.i + 1) : open()),
   };
 }

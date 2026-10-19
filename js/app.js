@@ -1,14 +1,16 @@
 // Flujo de la app: menú → opciones → partida → fin. Guardado en localStorage.
 import { Chess } from './chess.js';
 import { createBoard } from './board.js';
-import { pieceSVG, pieceArt, boardArt, frame, doodle, icon, skySVG, tallySVG, lapizSVG, spiderSVG, antsSVG, startBoil, DEFS, SETS, setPieceSet } from './art.js';
+import { pieceSVG, pieceArt, boardArt, frame, doodle, icon, skySVG, tallySVG, lapizSVG, spiderSVG, antsSVG, startBoil, DEFS, SETS, setPieceSet, pieceSet, SCHEMES, setScheme, scheme } from './art.js';
 import * as sound from './sound.js';
 import { initLearn } from './learn.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const other = c => (c === 'w' ? 'b' : 'w');
-const NAME = { w: 'Azul', b: 'Rojo' };
+const NAME = c => SCHEMES[scheme].names[c]; // Azul/Rojo, Blancas/Negras o Naranja/Morado
+// las frases grabadas dicen "azul" y "rojo": con otros colores se usa la versión sin color
+const sideVoice = (base, c) => (scheme === 'tinta' ? `${base}_${c === 'w' ? 'azul' : 'rojo'}` : base === 'turno' ? 'te_toca' : 'mate_ganaste');
 const LEVEL = { 0: 'dormilón', 1: 'fácil', 2: 'medio', 3: 'difícil', 4: 'experto' };
 const VAL = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 100 };
 const PIECE_NAME = { q: 'Reina', r: 'Torre', b: 'Alfil', n: 'Caballo' };
@@ -21,15 +23,23 @@ const HELPS = {
 // ---------- guardado ----------
 const KEY = 'ajedrez-garabato-v1';
 const store = (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } })();
-store.opts = { mode: 'bot', level: '1', color: 'w', helps: 'muchas', spin: '0', set: 'garabato', ...store.opts };
+store.opts = { mode: 'bot', level: '1', color: 'w', helps: 'muchas', spin: '0', set: 'garabato', guide: false, scheme: 'tinta', musicStyle: 'infantil', ...store.opts };
 setPieceSet(store.opts.set);
+sound.setMusicStyle(store.opts.musicStyle);
+function applyScheme() {
+  setScheme(store.opts.scheme);
+  const C = SCHEMES[store.opts.scheme], root = document.documentElement.style;
+  root.setProperty('--side-w', C.ink.w);
+  root.setProperty('--side-b', C.ink.b);
+}
+applyScheme();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch { /* modo privado o sin espacio */ } };
 store.audio = { fx: true, voice: true, music: true, mute: false, ...store.audio };
 sound.setPrefs(store.audio);
 
 let G = null; // partida en curso: datos guardables + chess, thinking, hint...
 const persist = () => {
-  const { chess, thinking, hinting, hint, spinSide, sleepy, say, oops, sayTimer, ...data } = G;
+  const { chess, thinking, hinting, hint, spinSide, sleepy, say, oops, sayTimer, guideAt, ...data } = G;
   store.game = data;
   save();
 };
@@ -47,7 +57,7 @@ function paintMenu() {
   const c = new Chess();
   let live = false;
   if (g?.moves?.length) {
-    try { g.moves.forEach(m => c.move(m)); live = !c.isGameOver(); } catch { live = false; }
+    try { g.moves.forEach(m => c.move(m)); live = !c.isGameOver() && bareLeft(g) > 0; } catch { live = false; }
   }
   const wins = (store.results || []).filter(x => x.r === 'w').length;
   $('#bot-wins').innerHTML = wins ? `${tallySVG(wins)}<span>${wins === 1 ? 'ganada' : 'ganadas'}</span>` : '';
@@ -86,6 +96,7 @@ function paintArt() {
     slot.innerHTML = svg;
   }
   $('.theme-mini').innerHTML = pieceSVG('k', 'w') + pieceSVG('q', 'b');
+  for (const el of $$('[data-sch]')) el.innerHTML = pieceSVG('q', 'w', 'happy', undefined, el.dataset.sch) + pieceSVG('k', 'b', 'happy', undefined, el.dataset.sch);
   $('.hero').innerHTML = pieceSVG('k', 'w', 'happy') + `<button class="lapiz-btn hero-lapiz" data-act="lapiz" aria-label="Lápiz te saluda">${lapizSVG('happy')}</button>` + pieceSVG('q', 'b', 'happy');
 }
 
@@ -112,6 +123,8 @@ function paintSetup() {
   for (const el of $$('.pair-only')) el.hidden = o.mode !== 'pair';
   for (const seg of $$('.seg')) for (const b of $$('button', seg)) b.setAttribute('aria-pressed', b.dataset.val === o[seg.dataset.opt]);
   $('#helps-note').textContent = HELPS[o.helps].note;
+  $('[data-check="guide"]').checked = o.guide;
+  for (const el of $$('[data-side]')) el.textContent = NAME(el.dataset.side);
 }
 
 // efectos, voz y música se prenden por separado en el menú; en la partida un solo botón calla todo
@@ -144,7 +157,7 @@ const flipped = () => (G.mode === 'bot' ? G.human === 'b' : G.spin === '1' && G.
 function newGame() {
   const o = store.opts;
   const human = o.mode === 'bot' ? (o.color === 'r' ? (Math.random() < 0.5 ? 'w' : 'b') : o.color) : 'w';
-  loadGame({ mode: o.mode, level: o.level, helps: o.helps, spin: o.spin, human, moves: [], undos: 0, hints: 0, flip: false }, true);
+  loadGame({ mode: o.mode, level: o.level, helps: o.helps, spin: o.spin, human, moves: [], undos: 0, hints: 0, flip: false, guide: o.mode === 'bot' && o.guide, bareAt: null }, true);
   persist();
 }
 
@@ -152,35 +165,59 @@ function loadGame(data, intro = false) {
   const chess = new Chess();
   try { data.moves.forEach(m => chess.move(m)); } catch { data.moves = chess.history({ verbose: true }).map(m => m.lan); }
   G = { ...data, chess, thinking: false, hinting: false, hint: null, spinSide: chess.turn() };
+  checkBare(false);
   lastTouch = Date.now();
   $('#dialog').hidden = true;
   show('game');
   render(intro ? { intro: true } : undefined);
-  if (!chess.isGameOver() && !humanTurn()) setTimeout(botTurn, intro ? 1400 : 0);
-  else if (intro) setTimeout(() => G.chess === chess && sound.say(G.mode === 'pair' ? 'turno_azul' : 'te_toca'), 1300);
+  if (ended()) return;
+  if (!humanTurn()) setTimeout(botTurn, intro ? 1400 : 0);
+  else {
+    if (intro) setTimeout(() => G.chess === chess && sound.say(G.guide ? 'guia_hola' : G.mode === 'pair' ? sideVoice('turno', 'w') : 'te_toca'), 1300);
+    setTimeout(() => G.chess === chess && guideTurn(), intro ? 2600 : 600);
+  }
+}
+
+// ---------- final de rey solo: cuenta de jugadas para dar jaque mate; si se acaban, tablas ----------
+const bareLimit = g => (g.mode === 'pair' || +g.level <= 1 ? 25 : 20);
+const bareSide = c => ['w', 'b'].find(col => c.board().flat().every(p => !p || p.color !== col || p.type === 'k'));
+const bareLeft = g => (g.bareAt == null ? Infinity : bareLimit(g) - Math.floor((g.moves.length - g.bareAt) / 2));
+const ended = () => G.chess.isGameOver() || bareLeft(G) <= 0;
+function checkBare(announce) {
+  const g = G, side = bareSide(g.chess);
+  if (!side) { g.bareAt = null; return; }
+  if (g.bareAt != null && g.bareAt <= g.moves.length) return;
+  g.bareAt = g.moves.length;
+  if (announce) setTimeout(() => G === g && sound.say(g.mode === 'pair' ? 'solo_rey_pareja' : side === g.human ? 'solo_rey_tu' : 'solo_rey_bot'), 1300);
 }
 
 const view = createBoard($('#board'), {
   pick(sq) {
-    if (!G || G.thinking || G.hinting || G.chess.isGameOver() || !humanTurn()) return false;
+    if (!G || G.thinking || G.hinting || ended() || !humanTurn()) return false;
     return G.chess.get(sq)?.color === G.chess.turn();
   },
   targets: sq => G.chess.moves({ square: sq, verbose: true }).map(m => ({ to: m.to, capture: !!m.captured })),
   move: humanMove,
   showTargets: () => HELPS[G.helps].moves,
   sound: sound.play,
-  select: sq => sound.creature(G.chess.get(sq)?.type),
+  select: sq => sound.creature(G.chess.get(sq)?.type, pieceSet),
   miss(from, to) {
     sound.play('bonk');
-    const g = G, why = whyIllegal(g.chess, from, to);
+    const why = whyIllegal(G.chess, from, to);
     sound.say(why.key);
-    g.say = why.text;
-    g.oops = { sq: from, kind: '?' };
-    render();
-    clearTimeout(g.sayTimer);
-    g.sayTimer = setTimeout(() => { g.say = g.oops = null; if (G === g) render(); }, 2800);
+    G.oops = { sq: from, kind: '?' };
+    tell(why.text);
   },
 });
+
+// frase corta de Lápiz en la barra de estado
+function tell(text, ms = 2800) {
+  const g = G;
+  g.say = text;
+  render();
+  clearTimeout(g.sayTimer);
+  g.sayTimer = setTimeout(() => { g.say = g.oops = null; if (G === g) render(); }, ms);
+}
 
 // explica con palabras de niño por qué esa jugada no vale
 const WHY = {
@@ -227,7 +264,43 @@ async function humanMove(from, to, dragged) {
     promotion = await pickPromotion(p.color);
     if (!promotion) return render();
   }
+  if (G.guide && risky({ from, to, promotion }) && !(await confirmRisk(G.chess.get(from).type, promotion))) return render();
   play({ from, to, promotion }, dragged);
+}
+
+// modo guía: ¿la pieza queda donde se la pueden comer y sale perdiendo?
+function risky(m) {
+  const c = G.chess, mv = c.move(m), p = { ...c.get(mv.to), square: mv.to };
+  const bad = p.type !== 'p' && p.type !== 'k' && !c.isCheckmate() && inDanger(c, p) && VAL[p.type] > (VAL[mv.captured] || 0);
+  c.undo();
+  return bad;
+}
+function confirmRisk(type, promotion) {
+  sound.say('guia_cuidado');
+  const t = promotion || type;
+  return new Promise(res => dialog({
+    title: '¡Cuidado!',
+    text: `Ahí te pueden comer tu ${PIECE_NAME[t].toLowerCase()}. ¿Seguro que quieres ir ahí?`,
+    art: pieceSVG(t, G.human, 'scared'),
+    buttons: [['Mejor no', () => res(false), 'red'], ['Sí, ir ahí', () => res(true)]],
+    cancel: () => res(false),
+  }));
+}
+
+// modo guía (y finales fáciles contra un rey solo): Lápiz enseña solito una buena jugada en cada turno
+const guiding = () => G.mode === 'bot' && (G.guide || (+G.level <= 1 && bareSide(G.chess) === other(G.human)));
+async function guideTurn() {
+  const g = G, c = g.chess, n = g.moves.length;
+  if (!guiding() || ended() || !humanTurn() || g.thinking || g.guideAt === n) return;
+  g.guideAt = n;
+  const mate = c.moves({ verbose: true }).some(m => { c.move(m); const x = c.isCheckmate(); c.undo(); return x; });
+  if (mate) { sound.say('guia_mate'); tell('¡Psst! Hay un jaque mate. ¡Búscalo!', 3500); }
+  await new Promise(r => setTimeout(r, mate ? 3500 : 900));
+  if (G !== g || g.moves.length !== n || g.hint || g.hinting) return;
+  const m = await askBot('hint');
+  if (G !== g || g.moves.length !== n || g.hinting) return;
+  g.hint = m;
+  render();
 }
 
 function play(m, dragged = false) {
@@ -248,14 +321,16 @@ function play(m, dragged = false) {
   sound.play(c.inCheck() && !c.isCheckmate() ? 'check' : mv.captured ? 'capture' : castle ? 'castle' : mv.promotion ? 'promote' : 'move');
   if (mv.captured) sound.creature('ay');
   if (c.inCheck() && !c.isCheckmate()) sound.say(g.mode === 'bot' && c.turn() !== g.human ? 'jaque_bot' : 'jaque_tu');
-  else if (g.mode === 'pair' && !c.isGameOver()) sound.say(c.turn() === 'w' ? 'turno_azul' : 'turno_rojo');
+  else if (g.mode === 'pair' && !c.isGameOver()) sound.say(sideVoice('turno', c.turn()));
+  checkBare(true);
   persist();
   render(anim);
   if (g.mode === 'pair' && g.spin === '1') {
     setTimeout(() => { if (G === g && g.spinSide !== c.turn()) { g.spinSide = c.turn(); render(); } }, 800);
   }
-  if (c.isGameOver()) setTimeout(() => G === g && gameOver(), 900);
+  if (ended()) setTimeout(() => G === g && gameOver(), 900);
   else if (!humanTurn()) botTurn();
+  else guideTurn();
 }
 
 // ---------- bot (Web Worker) ----------
@@ -287,7 +362,7 @@ async function botTurn() {
 const helps = () => HELPS[G.helps];
 const humanMoved = () => G.moves.length > (G.mode === 'bot' && G.human === 'b' ? 1 : 0);
 const canUndo = () => G.undos < helps().undo && humanMoved() && !G.hinting;
-const canHint = () => G.hints < helps().hints && humanTurn() && !G.thinking && !G.hinting && !G.chess.isGameOver();
+const canHint = () => G.hints < helps().hints && humanTurn() && !G.thinking && !G.hinting && !ended();
 
 function undo() {
   if (!canUndo()) return;
@@ -298,10 +373,13 @@ function undo() {
   G.undos++;
   G.hint = null;
   G.spinSide = c.turn();
+  G.guideAt = null;
+  checkBare(false);
   sound.play('select');
   persist();
   render();
   if (!humanTurn()) botTurn();
+  else guideTurn();
 }
 
 async function hint() {
@@ -328,9 +406,10 @@ function inDanger(c, p) {
 
 function result() {
   const c = G.chess;
+  if (!c.isGameOver()) return { title: 'Tablas', text: 'Se acabaron las jugadas para dar jaque mate.', win: null, happy: false, out: true };
   if (c.isCheckmate()) {
     const win = other(c.turn());
-    if (G.mode === 'pair') return { title: `¡Gana ${NAME[win]}!`, text: '¡Jaque mate!', win, happy: true };
+    if (G.mode === 'pair') return { title: `¡Gana ${NAME(win)}!`, text: '¡Jaque mate!', win, happy: true };
     return win === G.human
       ? { title: '¡Ganaste!', text: '¡Jaque mate al bot!', win, happy: true }
       : { title: 'Ganó el bot', text: 'Jaque mate. ¡La próxima le ganas!', win, happy: false };
@@ -343,7 +422,7 @@ function result() {
 }
 
 function render(anim) {
-  const c = G.chess, turn = c.turn(), over = c.isGameOver(), check = c.inCheck(), h = helps();
+  const c = G.chess, turn = c.turn(), over = ended(), check = c.inCheck(), h = helps();
   const hist = c.history({ verbose: true }), last = hist[hist.length - 1], mine = humanTurn();
   const mood = p => {
     if (over) return !c.isCheckmate() ? 'idle' : p.color === turn ? (p.type === 'k' ? 'dead' : 'scared') : 'happy';
@@ -379,13 +458,15 @@ function render(anim) {
   else if (G.thinking) s = 'El bot está pensando<span class="dots"></span>';
   else if (G.hinting) s = 'Buscando una pista<span class="dots"></span>';
   else if (G.mode === 'bot') s = '¡Te toca!';
-  else s = `Turno de <b class="ink-${turn}">${NAME[turn]}</b>`;
+  else s = `Turno de <b class="ink-${turn}">${NAME(turn)}</b>`;
   if (check && !over) s += ' <b class="alert">¡Jaque!</b>';
+  const left = bareLeft(G);
+  if (left !== Infinity && !over) s += `<small class="count${left <= 5 ? ' alert' : ''}">${left === 1 ? 'Queda 1 jugada' : `Quedan ${left} jugadas`} para el jaque mate</small>`;
   $('#status').innerHTML = s;
 
   const bottom = flipped() ? 'b' : 'w';
   for (const [el, color] of [[$('#p-bottom'), bottom], [$('#p-top'), other(bottom)]]) {
-    const name = G.mode === 'bot' ? (color === G.human ? 'Tú' : `Bot ${LEVEL[G.level]}`) : NAME[color];
+    const name = G.mode === 'bot' ? (color === G.human ? 'Tú' : `Bot ${LEVEL[G.level]}`) : NAME(color);
     const caps = hist.filter(m => m.captured && m.color === color).map(m => m.captured).sort((a, b) => VAL[b] - VAL[a]);
     el.className = `player ink-${color}${turn === color && !over ? ' on' : ''}`;
     // las piezas comidas se van a dormir junto a quien las comió
@@ -431,14 +512,14 @@ function world(c, turn, over, hist) {
 }
 
 function gameOver() {
-  if (!G.chess.isGameOver()) return;
+  if (!ended()) return;
   const r = result();
   if (G.mode === 'bot') {
     store.results = [{ level: G.level, r: r.happy ? 'w' : r.win ? 'l' : 'd' }, ...(store.results || [])].slice(0, 200);
     save();
   }
   if (!r.win) sound.play('draw'); else if (!r.happy) sound.play('lose');
-  sound.say(!r.win ? 'tablas' : G.mode === 'pair' ? (r.win === 'w' ? 'mate_azul' : 'mate_rojo') : r.happy ? 'mate_ganaste' : 'mate_bot');
+  sound.say(!r.win ? (r.out ? 'tablas_jugadas' : 'tablas') : G.mode === 'pair' ? sideVoice('mate', r.win) : r.happy ? 'mate_ganaste' : 'mate_bot');
   if (r.happy) confetti();
   dialog({
     title: r.title,
@@ -517,7 +598,7 @@ addEventListener('pointerdown', () => {
   if (G?.sleepy) { G.sleepy = false; render(); }
 }, true);
 setInterval(() => {
-  if (!G || G.sleepy || document.body.dataset.screen !== 'game' || G.thinking || G.chess.isGameOver() || !humanTurn()) return;
+  if (!G || G.sleepy || document.body.dataset.screen !== 'game' || G.thinking || ended() || !humanTurn()) return;
   if (Date.now() - lastTouch > 25000) { G.sleepy = true; render(); sound.say('dormido'); }
 }, 5000);
 
@@ -542,8 +623,8 @@ function tapLapiz() {
   if (scr === 'lesson') return learn.speak();
   if (scr !== 'game' || !G) return sound.say('hola');
   if (canHint()) return hint();
-  if (G.chess.isGameOver()) return;
-  sound.say(G.thinking ? 'hola' : G.mode === 'pair' ? (G.chess.turn() === 'w' ? 'turno_azul' : 'turno_rojo') : 'te_toca');
+  if (ended()) return;
+  sound.say(G.thinking ? 'hola' : G.mode === 'pair' ? sideVoice('turno', G.chess.turn()) : 'te_toca');
 }
 sound.setOnTalk(on => document.body.classList.toggle('talking', on));
 
@@ -572,13 +653,24 @@ document.addEventListener('click', e => {
   else if (go === 'bot' || go === 'pair') openSetup(go);
   else if (go === 'learn') learn.open();
   else if (go === 'themes') { paintThemes(); show('themes'); }
+  else if (go === 'settings') { paintSetup(); show('settings'); }
   if (b.dataset.theme) chooseTheme(b.dataset.theme);
   if (b.dataset.act) actions[b.dataset.act]?.();
   if (seg) {
     store.opts[seg.dataset.opt] = b.dataset.val;
     if (seg.dataset.opt === 'set') { setPieceSet(b.dataset.val); paintArt(); sound.say(`tema_${b.dataset.val}`); }
+    if (seg.dataset.opt === 'scheme') { applyScheme(); paintArt(); }
+    if (seg.dataset.opt === 'musicStyle') { sound.unlock(); sound.setMusicStyle(b.dataset.val); }
     save(); paintSetup(); sound.play('select');
   }
+});
+
+document.addEventListener('change', e => {
+  const k = e.target.dataset.check;
+  if (!k) return;
+  store.opts[k] = e.target.checked;
+  save();
+  sound.play('select');
 });
 
 for (const i of $$('[data-icon]')) i.outerHTML = icon(i.dataset.icon);

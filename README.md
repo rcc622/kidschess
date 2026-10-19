@@ -6,17 +6,23 @@ Ajedrez para jugar en familia, dibujado a pluma sobre una hoja de libreta. Funci
 
 ## Qué trae
 
-- **Contra el bot**: cinco niveles — dormilón, fácil (a veces se equivoca), medio, difícil y experto (usa libro de aperturas y piensa más). Puedes jugar con azul (empieza), rojo o sorpresa.
+- **Contra el bot**: cinco niveles — dormilón, fácil (a veces se equivoca), medio, difícil y experto (usa libro de aperturas y piensa más). Puedes jugar con el color que empieza, el otro o sorpresa.
+- **Modo guía** (casilla en las opciones contra el bot): en cada turno Lápiz enseña una buena jugada con la flecha naranja, avisa "¡Cuidado!" antes de dejar una pieza donde te la comen gratis y susurra cuando hay un jaque mate en una.
+- **Final de rey solo**: cuando a un bando solo le queda el rey, hay 25 jugadas (niveles dormilón y fácil, y en pareja) o 20 (medio a experto) para dar jaque mate; la cuenta se ve arriba y, si se acaba, quedan tablas. En dormilón y fácil, si al bot solo le queda el rey, Lápiz enseña la jugada en cada turno aunque el modo guía esté apagado.
 - **En pareja** en el mismo dispositivo, con opción de girar el tablero en cada turno.
 - **Ayudas por edad**: muchas (5–7: ves los movimientos, las piezas se asustan si están en peligro, deshacer y pistas sin límite), algunas (8–10: 3 deshacer y 3 pistas), pocas (11+).
-- **Aprender a mover**: una lección por pieza ("cómete los renacuajos rojos") y reglas especiales: jaque, jaque mate, enroque, coronar y al paso.
-- **Personajes** (menú → Personajes): tres temas para personalizar el juego; cada uno trae sus dibujos, sus lecciones y la voz de Lápiz nombrando a sus personajes:
+- **Aprender a mover**: una lección por pieza ("cómete a los rojos") y reglas especiales: jaque, jaque mate, enroque, coronar y al paso.
+- **Personajes** (menú → Personajes): seis temas para personalizar el juego; cada uno trae sus dibujos, sus lecciones y la voz de Lápiz nombrando a sus personajes:
   - **Garabato**: ranita, castillo de arena, mago, caballito, flor con corona y sol con bigote.
   - **Bosque**: pollito con casco de cascarón, pony con mantita, búho con mitra, tortuga que carga un castillo, abeja reina y león con capa.
   - **Mar**: pececito, caballito de mar, pulpo mago, cangrejo ermitaño con concha-castillo, estrella de mar reina y morsa rey.
+  - **Robots**: robotito de orugas, caballo robot, dron, robot castillo, reina robot y rey robot con capa.
+  - **Dinos**: dino bebé, pterodáctilo, braquiosaurio, triceratops con gola de castillo, estegosaurio reina y tiranosaurio rey.
+  - **Espacio**: marcianito, cohete, ovni, astronauta con bandera, luna reina y rey Saturno.
+- **Ajustes** (menú → Ajustes): colores de las piezas (Pluma: azul y rojo · Clásico: blancas y negras · Colorido: cada pieza de un color), estilo de música (Infantil, Aventura, Videojuego, Lo-fi o Espacial) y efectos, voz y música por separado.
 - Las piezas están vivas: tiemblan como dibujo, parpadean, miran a los lados, dan brinquitos, tiemblan de miedo, dicen "no" con la cabeza si la jugada no vale, se aplastan al aterrizar, echan destellos al coronar y el equipo ganador festeja.
 - **Lápiz**, la mascota, habla (voz en español mexicano): lee las lecciones, avisa jaque, explica por qué una jugada no vale, festeja al ganar y da pistas si lo tocas.
-- Cada pieza tiene su voz (el caballito relincha, la reina suena a flor mágica…), música tranquila que se pone nerviosa cuando hay jaque y fanfarria al ganar. Efectos, voz y música se prenden por separado en el menú.
+- Cada pieza tiene su voz (el caballito relincha, la reina suena a flor mágica, los robots hacen bip-bup…), música tranquila que se pone nerviosa cuando hay jaque y fanfarria al ganar. La música Infantil está grabada; Aventura, Videojuego, Lo-fi y Espacial se tocan con código. Si falta el audio de una frase, la lee la voz del teléfono.
 - La partida se guarda sola y se retoma al volver a abrir.
 - Si una jugada no vale, la app explica por qué ("El caballo salta en forma de L", "Tu rey quedaría en peligro").
 - Puntitos que muestran por dónde pasó la última pieza (en L si fue el caballo).
@@ -47,7 +53,7 @@ y abrir http://localhost:5173. En `localhost` el service worker no se registra p
 | `js/app.js` | menú, partida, guardado, diálogos |
 | `js/board.js` | tablero SVG, tocar y arrastrar, animaciones |
 | `js/art.js` | arte a mano: juego Garabato, caras, marcas, doodles, íconos, Lápiz |
-| `js/animals.js` | juegos Bosque y Mar |
+| `js/animals.js` | juegos Bosque, Mar, Robots, Dinos y Espacio |
 | `js/ink.js` | ayudantes de trazo (temblor, curvas, patas, melenas) |
 | `dev/muestras.html` | hoja de muestras de un juego: `dev/muestras.html?set=bosque` |
 | `js/bot.js` | bot alpha-beta (corre en un Web Worker) |

@@ -1,14 +1,44 @@
 // Todo lo "dibujado a mano": trazos temblorosos, piezas-personaje, marcas, doodles e íconos.
 // Cada dibujo se hornea en 3 frames con temblor distinto; CSS los alterna (animación "boil").
 
-export const INK = { w: '#1f3a93', b: '#a4161a' };
-export const TINT = { w: '#d6e0f5', b: '#f6d3cb' };
+// colores de los bandos: se cambian con setScheme() (Pluma, Clásico o Colorido)
+export const SCHEMES = {
+  tinta: {
+    name: 'Pluma', names: { w: 'Azul', b: 'Rojo' }, them: 'los rojos', foe: 'rojo',
+    ink: { w: '#1f3a93', b: '#a4161a' }, tint: { w: '#d6e0f5', b: '#f6d3cb' }, shade: { w: '#a9bdec', b: '#f0a596' },
+    hatch: { w: ['#8aa4e2', '#6c88d4'], b: ['#e98f7e', '#d66f5c'] },
+  },
+  clasico: {
+    name: 'Clásico', names: { w: 'Blancas', b: 'Negras' }, them: 'las negras', foe: 'negro',
+    ink: { w: '#3b3b3b', b: '#141414' }, tint: { w: '#fdfcf7', b: '#6f6f6f' }, shade: { w: '#dedad0', b: '#4c4c4c' },
+    hatch: { w: ['#cbc6b8', '#ada899'], b: ['#3a3a3a', '#262626'] },
+  },
+  colores: {
+    name: 'Colorido', names: { w: 'Naranja', b: 'Morado' }, them: 'los morados', foe: 'morado',
+    ink: { w: '#b4530a', b: '#5b2a86' },
+    tint: { w: { p: '#ffe08a', n: '#ffc285', b: '#ffb3c7', r: '#ffd59e', q: '#ff9e9e', k: '#ffd166' },
+            b: { p: '#b8f0c8', n: '#a8d8ff', b: '#d4c2ff', r: '#9ee6dc', q: '#c3b5ff', k: '#a0c4ff' } },
+    shade: { w: { p: '#f6c443', n: '#f6a057', b: '#f78aa8', r: '#f3b765', q: '#f57575', k: '#f5b12c' },
+             b: { p: '#79d99a', n: '#6fb8f5', b: '#ab92f5', r: '#5fcfc0', q: '#9886f5', k: '#6f9ef5' } },
+    hatch: { w: ['#e8a23c', '#d4782a'], b: ['#6d8fd6', '#5a4fb8'] },
+  },
+};
+export let scheme = 'tinta';
+export const INK = { ...SCHEMES.tinta.ink };   // objeto vivo: tablero y marcas lo leen
+export const TINT = { ...SCHEMES.tinta.tint };
+export const UI_INK = '#1f3a93';               // tinta de la interfaz y de Lápiz (no cambia)
+export function setScheme(name) {
+  if (!SCHEMES[name]) return;
+  scheme = name;
+  Object.assign(INK, SCHEMES[name].ink);
+  Object.assign(TINT, SCHEMES[name].tint);
+}
 export const PAPER = '#fffcf3';
 export const PENCIL = '#555';
 const FRAMES = 3;
 
 import { rng, hash, f, wob, smooth, blob, line, star, petal, dots } from './ink.js';
-import { BOSQUE, MAR } from './animals.js';
+import { BOSQUE, MAR, ROBOTS, DINOS, ESPACIO } from './animals.js';
 
 // ---------- piezas: cada parte = [path o fn(r), relleno, grosor] ----------
 // rellenos: t = tinta clara del bando, i = tinta, p = papel, n = sin relleno
@@ -122,24 +152,25 @@ function face({ eyes, mouth, s, lashes, brows }, mood, ink, r, big = false) {
 }
 
 // ---------- juegos de piezas ----------
-const SHADE = { w: '#a9bdec', b: '#f0a596' };
-const HATCH = { w: ['#8aa4e2', '#6c88d4'], b: ['#e98f7e', '#d66f5c'] };
-export const SETS = { garabato: { name: 'Garabato', eyes: 'dot', ...PIECES }, bosque: BOSQUE, mar: MAR };
+
+export const SETS = { garabato: { name: 'Garabato', eyes: 'dot', ...PIECES }, bosque: BOSQUE, mar: MAR, robots: ROBOTS, dinos: DINOS, espacio: ESPACIO };
 export let pieceSet = 'garabato';
 export function setPieceSet(name) { if (SETS[name]) pieceSet = name; }
 
-// rayitas de lápiz de color para los rellenos T y D (se insertan una vez en la página)
-export const DEFS = `<svg class="defs" width="0" height="0" aria-hidden="true" style="position:absolute"><defs>${Object.entries(HATCH).map(([c, [a, b]]) =>
-  `<pattern id="hatch-${c}" patternUnits="userSpaceOnUse" width="4.6" height="4.6" patternTransform="rotate(38)"><path d="M0 2.3H4.6" stroke="${a}" stroke-width="1.5" opacity=".55"/></pattern>` +
-  `<pattern id="hatch-${c}-d" patternUnits="userSpaceOnUse" width="4" height="4" patternTransform="rotate(-52)"><path d="M0 2H4" stroke="${b}" stroke-width="1.4" opacity=".6"/></pattern>`).join('')}</defs></svg>`;
+// rayitas de lápiz de color para los rellenos T y D, de todos los esquemas (se insertan una vez en la página)
+export const DEFS = `<svg class="defs" width="0" height="0" aria-hidden="true" style="position:absolute"><defs>${Object.entries(SCHEMES).map(([sc, C]) => Object.entries(C.hatch).map(([c, [a, b]]) =>
+  `<pattern id="hatch-${sc}-${c}" patternUnits="userSpaceOnUse" width="4.6" height="4.6" patternTransform="rotate(38)"><path d="M0 2.3H4.6" stroke="${a}" stroke-width="1.5" opacity=".55"/></pattern>` +
+  `<pattern id="hatch-${sc}-${c}-d" patternUnits="userSpaceOnUse" width="4" height="4" patternTransform="rotate(-52)"><path d="M0 2H4" stroke="${b}" stroke-width="1.4" opacity=".6"/></pattern>`).join('')).join('')}</defs></svg>`;
 
 const pieceCache = new Map();
 // SVG (sin <svg>) de una pieza en caja 100×100, con sus 3 frames
-export function pieceArt(type, color, mood = 'idle', set = pieceSet) {
-  const key = set + type + color + mood;
+export function pieceArt(type, color, mood = 'idle', set = pieceSet, sc = scheme) {
+  const key = set + sc + type + color + mood;
   if (pieceCache.has(key)) return pieceCache.get(key);
-  const S = SETS[set], P = S[type], ink = INK[color], big = S.eyes === 'big';
-  const fills = { t: TINT[color], T: TINT[color], D: SHADE[color], i: ink, p: PAPER, n: 'none', G: '#f6cf55', O: '#f4a340', K: '#f2a7b8' };
+  const S = SETS[set], P = S[type], C = SCHEMES[sc], ink = C.ink[color], big = S.eyes === 'big';
+  const pick = v => (typeof v === 'string' ? v : v[type]); // Colorido: un color por pieza
+  const tint = pick(C.tint[color]), shade = pick(C.shade[color]);
+  const fills = { t: tint, T: tint, D: shade, i: ink, p: PAPER, n: 'none', G: '#f6cf55', O: '#f4a340', K: '#f2a7b8' };
   let out = '';
   for (let fr = 0; fr < FRAMES; fr++) {
     const r = rng(hash(set + type) + fr * 977), rf = rng(hash(set + type + 'fill') + fr * 311), rm = rng(hash(mood) + fr * 131);
@@ -150,7 +181,7 @@ export function pieceArt(type, color, mood = 'idle', set = pieceSet) {
       if (fill !== 'n') {
         const fd = typeof shape === 'function' ? shape(rf) : wob(shape, rf, big ? 1.2 : 1.6);
         g += `<path d="${fd}" fill="${fills[fill]}"/>`;
-        if (fill === 'T' || fill === 'D') g += `<path d="${fd}" fill="url(#hatch-${color}${fill === 'D' ? '-d' : ''})"/>`;
+        if (fill === 'T' || fill === 'D') g += `<path d="${fd}" fill="url(#hatch-${sc}-${color}${fill === 'D' ? '-d' : ''})"/>`;
       }
       g += `<path d="${d}" fill="none" stroke="${ink}" stroke-width="${w}"/>`;
     }
@@ -161,8 +192,8 @@ export function pieceArt(type, color, mood = 'idle', set = pieceSet) {
   return out;
 }
 
-export const pieceSVG = (type, color, mood, set) =>
-  `<svg viewBox="0 0 100 100" aria-hidden="true">${pieceArt(type, color, mood, set)}</svg>`;
+export const pieceSVG = (type, color, mood, set, sc) =>
+  `<svg viewBox="0 0 100 100" aria-hidden="true">${pieceArt(type, color, mood, set, sc)}</svg>`;
 
 // ---------- tablero ----------
 export function boardArt() {
@@ -184,7 +215,7 @@ export function boardArt() {
   return `<path d="${wob('M-14 -14L814 -14L814 814L-14 814Z', r, 3)}" fill="#fbf8ee"/>
     <path class="hatch" pathLength="1" d="${hatch}" stroke="${PENCIL}" stroke-width="2.2" opacity=".42" fill="none"/>
     <path pathLength="1" d="${grid}" stroke="${PENCIL}" stroke-width="2.6" opacity=".75" fill="none"/>
-    <path pathLength="1" d="${border}" stroke="${INK.w}" stroke-width="4" fill="none" stroke-linejoin="round"/>
+    <path pathLength="1" d="${border}" stroke="${UI_INK}" stroke-width="4" fill="none" stroke-linejoin="round"/>
     <path d="${TAPE}" transform="translate(4 4) rotate(-38)" fill="${TAPE_FILL}"/>
     <path d="${TAPE}" transform="translate(796 4) rotate(36)" fill="${TAPE_FILL}"/>`;
 }
@@ -340,7 +371,7 @@ const LAPIZ = [
 const lapizCache = new Map();
 export function lapizSVG(mood = 'idle') {
   if (lapizCache.has(mood)) return lapizCache.get(mood);
-  const ink = INK.w;
+  const ink = UI_INK;
   let out = '';
   for (let fr = 0; fr < FRAMES; fr++) {
     const r = rng(hash('lapiz') + fr * 59), rf = rng(hash('lapiz-fill') + fr * 7), rm = rng(hash('lapiz' + mood) + fr * 3);
@@ -398,6 +429,7 @@ const ICONS = {
   board: 'M5 5L27 5L27 27L5 27ZM5 16L27 16M16 5L16 27',
   voice: 'M5 8Q5 4 9 4L24 4Q28 4 28 8L28 17Q28 21 24 21L14 21L8 27L9 21Q5 21 5 17ZM11 12L22 12M11 15L18 15',
   music: 'M7 25C7 21 14 21 14 24C14 28 7 29 7 25ZM14 24L14 7L26 4L26 20M26 20C26 16 19 16 19 19C19 23 26 24 26 20ZM14 11L26 8',
+  gear: 'M16 9C20 9 23 12 23 16C23 20 20 23 16 23C12 23 9 20 9 16C9 12 12 9 16 9ZM16 13C18 13 19 14 19 16C19 18 18 19 16 19C14 19 13 18 13 16C13 14 14 13 16 13ZM16 4L16 9M16 23L16 28M4 16L9 16M23 16L28 16M7.5 7.5L11 11M21 21L24.5 24.5M7.5 24.5L11 21M21 11L24.5 7.5',
   again: 'M26 16C26 23 21 27 16 27C10 27 5 22 5 16C5 10 10 5 16 5C20 5 23 7 25 10M25 3L25 10L18 10',
 };
 

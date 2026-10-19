@@ -47,11 +47,7 @@
     </nav>
     <div class="menu-foot">
       <button class="btn theme-btn" data-go="themes"><span class="theme-mini"></span><span>Personajes</span></button>
-      <div class="audio-toggles" role="group" aria-label="Sonido">
-        <button class="btn ghost" data-act="fx"></button>
-        <button class="btn ghost" data-act="voice"></button>
-        <button class="btn ghost" data-act="music"></button>
-      </div>
+      <button class="btn theme-btn" data-go="settings"><i data-icon="gear"></i><span>Ajustes</span></button>
     </div>
   </main>
 
@@ -64,6 +60,43 @@
     </header>
     <p class="lesson-text">¿Con quiénes quieres jugar? Toca un equipo.</p>
     <div id="theme-list" class="theme-list"></div>
+  </section>
+
+  <!-- AJUSTES -->
+  <section id="settings" class="screen" hidden>
+    <header class="topbar">
+      <button class="btn icon" data-go="menu" aria-label="Volver al menú"><i data-icon="back"></i></button>
+      <h2>Ajustes</h2>
+      <span class="icon-spacer"></span>
+    </header>
+    <div class="settings">
+      <div class="opt">
+        <p>Colores de las piezas</p>
+        <div class="seg" data-opt="scheme">
+          <button data-val="tinta"><span class="sch-art" data-sch="tinta"></span>Pluma <small>azul y rojo</small></button>
+          <button data-val="clasico"><span class="sch-art" data-sch="clasico"></span>Clásico <small>blancas y negras</small></button>
+          <button data-val="colores"><span class="sch-art" data-sch="colores"></span>Colorido <small>muchos colores</small></button>
+        </div>
+      </div>
+      <div class="opt">
+        <p>Música</p>
+        <div class="seg wrap" data-opt="musicStyle">
+          <button data-val="infantil"><i data-icon="music"></i>Infantil <small>para peques</small></button>
+          <button data-val="aventura"><i data-icon="music"></i>Aventura <small>de exploradores</small></button>
+          <button data-val="videojuego"><i data-icon="music"></i>Videojuego <small>8 bits</small></button>
+          <button data-val="lofi"><i data-icon="music"></i>Lo-fi <small>para concentrarse</small></button>
+          <button data-val="espacial"><i data-icon="music"></i>Espacial <small>sintetizadores</small></button>
+        </div>
+      </div>
+      <div class="opt">
+        <p>Sonido</p>
+        <div class="audio-toggles" role="group" aria-label="Sonido">
+          <button class="btn ghost" data-act="fx"></button>
+          <button class="btn ghost" data-act="voice"></button>
+          <button class="btn ghost" data-act="music"></button>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- OPCIONES DE PARTIDA -->
@@ -82,10 +115,13 @@
     <div class="opt bot-only">
       <p>¿Con qué color juegas?</p>
       <div class="seg" data-opt="color">
-        <button data-val="w" class="ink-w" data-art="k" data-color="w">Azul <small>empieza</small></button>
-        <button data-val="b" class="ink-b" data-art="k" data-color="b">Rojo</button>
+        <button data-val="w" class="ink-w" data-art="k" data-color="w"><span data-side="w">Azul</span> <small>empieza</small></button>
+        <button data-val="b" class="ink-b" data-art="k" data-color="b"><span data-side="b">Rojo</span></button>
         <button data-val="r"><span class="qmark" aria-hidden="true">?</span>Sorpresa</button>
       </div>
+    </div>
+    <div class="opt bot-only">
+      <label class="check"><input type="checkbox" data-check="guide"><span><b>Modo guía</b>Lápiz te enseña una buena jugada en cada turno y te avisa antes de que te coman una pieza.</span></label>
     </div>
     <div class="opt">
       <p>Ayudas</p>
@@ -98,10 +134,13 @@
     </div>
     <div class="opt">
       <p>Personajes</p>
-      <div class="seg" data-opt="set">
+      <div class="seg wrap" data-opt="set">
         <button data-val="garabato" data-art="k" data-set="garabato">Garabato</button>
         <button data-val="bosque" data-art="k" data-set="bosque">Bosque</button>
         <button data-val="mar" data-art="k" data-set="mar">Mar</button>
+        <button data-val="robots" data-art="k" data-set="robots">Robots</button>
+        <button data-val="dinos" data-art="k" data-set="dinos">Dinos</button>
+        <button data-val="espacio" data-art="k" data-set="espacio">Espacio</button>
       </div>
     </div>
     <div class="opt pair-only">

@@ -22,7 +22,7 @@
 <body>
 <div id="out"></div>
 <script type="module">
-import { pieceSVG, pieceArt, boardArt, SETS, DEFS } from '../js/art.js';
+import { pieceSVG, pieceArt, boardArt, SETS, DEFS, setScheme } from '../js/art.js';
 document.body.insertAdjacentHTML('afterbegin', DEFS);
 const set = new URLSearchParams(location.search).get('set') || 'bosque';
 const S = SETS[set];
@@ -30,7 +30,12 @@ const NAMES = {
   garabato: { p: 'Peón · ranita', n: 'Caballo · caballito', b: 'Alfil · mago', r: 'Torre · castillo', q: 'Reina · flor', k: 'Rey · sol' },
   bosque: { p: 'Peón · pollito', n: 'Caballo · caballito', b: 'Alfil · búho', r: 'Torre · tortuga', q: 'Reina · abeja', k: 'Rey · león' },
   mar: { p: 'Peón · pececito', n: 'Caballo · caballito de mar', b: 'Alfil · pulpo mago', r: 'Torre · cangrejo', q: 'Reina · estrella de mar', k: 'Rey · morsa' },
+  robots: { p: 'Peón · robotito', n: 'Caballo · caballo robot', b: 'Alfil · dron', r: 'Torre · robot castillo', q: 'Reina · reina robot', k: 'Rey · rey robot' },
+  dinos: { p: 'Peón · dino bebé', n: 'Caballo · pterodáctilo', b: 'Alfil · braquiosaurio', r: 'Torre · triceratops', q: 'Reina · estegosaurio', k: 'Rey · tiranosaurio' },
+  espacio: { p: 'Peón · marcianito', n: 'Caballo · cohete', b: 'Alfil · ovni', r: 'Torre · astronauta', q: 'Reina · luna', k: 'Rey · Saturno' },
 }[set];
+const sc = new URLSearchParams(location.search).get('sc');
+if (sc) setScheme(sc);
 const fig = (t, c, m = 'idle', cap = '', size = 200) => `<figure style="--size:${size}px">${pieceSVG(t, c, m, set)}<figcaption>${cap}</figcaption></figure>`;
 const order = ['k', 'q', 'r', 'b', 'n', 'p'];
 let html = `<h1>Juego "${S.name}"</h1>`;
