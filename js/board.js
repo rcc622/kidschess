@@ -5,11 +5,11 @@ import { pieceArt, boardArt, marks, INK } from './art.js';
 const FILES = 'abcdefgh';
 const seedOf = sq => sq.charCodeAt(0) * 13 + sq.charCodeAt(1) * 7;
 
-// cb: pick(sq) → bool, targets(sq) → [{to, capture}], move(from, to, dragged), showTargets() → bool, sound(name)
+// cb: pick(sq) → bool, targets(sq) → [{to, capture}], move(from, to, dragged), showTargets() → bool, sound(name), miss(from, to)
 export function createBoard(svg, cb) {
   svg.setAttribute('viewBox', '-20 -20 840 840');
-  svg.innerHTML = '<g class="b-base"></g><g class="b-marks"></g><g class="b-under"></g><g class="b-pieces"></g><g class="b-over"></g>';
-  const [gBase, gMarks, gUnder, gPieces, gOver] = svg.children;
+  svg.innerHTML = '<g class="b-base"></g><g class="b-marks"></g><g class="b-under"></g><g class="b-pieces"></g><g class="b-emo"></g><g class="b-over"></g>';
+  const [gBase, gMarks, gUnder, gPieces, gEmo, gOver] = svg.children;
   let st = { pieces: {} }, flipped = null, sel = null, targets = [], drag = null;
 
   const xy = sq => {
@@ -41,7 +41,10 @@ export function createBoard(svg, cb) {
   function paint() {
     let m = '';
     const { last, check, hint } = st;
-    if (last) for (const sq of [last.from, last.to]) m += marks.hi(...xy(sq), seedOf(sq));
+    if (last) {
+      for (const sq of [last.from, last.to]) m += marks.hi(...xy(sq), seedOf(sq));
+      m += marks.trail(...xy(last.from), ...xy(last.to), INK[last.color || 'w'], last.knight);
+    }
     if (check) m += marks.check(...xy(check), seedOf(check));
     if (sel) {
       const color = INK[st.pieces[sel]?.color || 'w'];
@@ -63,9 +66,25 @@ export function createBoard(svg, cb) {
       p += `<g class="pc${sq === sel ? ' sel' : ''}" data-sq="${sq}" transform="translate(${x} ${y})"><g class="pc-in">${pieceArt(pc.type, pc.color, mood)}</g></g>`;
     }
     gPieces.innerHTML = p;
+    gEmo.innerHTML = (st.emotes || []).map(e => marks.emote(...xy(e.sq), e.kind, seedOf(e.sq))).join('');
+  }
+
+  // al empezar: la hoja se dibuja sola y las piezas brincan a su lugar, fila por fila
+  function intro() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    svg.classList.add('drawing');
+    setTimeout(() => svg.classList.remove('drawing'), 1700);
+    for (const el of gPieces.querySelectorAll('.pc')) {
+      const r = +el.dataset.sq[1], row = r <= 4 ? r - 1 : 8 - r; // de afuera hacia adentro
+      el.firstElementChild.animate?.([
+        { transform: 'translateY(-40px) scale(.5)', opacity: 0 },
+        { transform: 'translateY(0) scale(1)', opacity: 1 },
+      ], { duration: 360, delay: 700 + row * 140 + Math.random() * 80, easing: 'cubic-bezier(.16, 1, .3, 1)', fill: 'backwards' });
+    }
   }
 
   function animate(anim) {
+    if (anim.intro) intro();
     for (const { from, to } of anim.moves || []) {
       const el = gPieces.querySelector(`[data-sq="${to}"] .pc-in`);
       if (!el || !el.animate) continue;
@@ -107,7 +126,7 @@ export function createBoard(svg, cb) {
       svg.setPointerCapture?.(e.pointerId);
       return;
     }
-    if (sel) { cb.sound?.('bonk'); select(null); }
+    if (sel) { cb.miss ? cb.miss(sel, sq) : cb.sound?.('bonk'); select(null); }
   });
 
   svg.addEventListener('pointermove', e => {
@@ -131,7 +150,7 @@ export function createBoard(svg, cb) {
       // con el dedo la pieza va levantada: se suelta donde se ve, no bajo la yema
       const sq = sqAt(e.pointerType === 'touch' ? { clientX: e.clientX, clientY: e.clientY - liftPx() } : e);
       if (sq && targets.some(t => t.to === sq)) { select(null); cb.move(d.from, sq, true); return; }
-      if (sq && sq !== d.from) cb.sound?.('bonk');
+      if (sq && sq !== d.from) cb.miss ? cb.miss(d.from, sq) : cb.sound?.('bonk');
       paint();
     } else if (d.wasSel) select(null);
   };

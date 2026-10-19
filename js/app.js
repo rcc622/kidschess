@@ -1,7 +1,7 @@
 // Flujo de la app: menú → opciones → partida → fin. Guardado en localStorage.
 import { Chess } from './chess.js';
 import { createBoard } from './board.js';
-import { pieceSVG, doodle, icon, startBoil } from './art.js';
+import { pieceSVG, pieceArt, boardArt, frame, doodle, icon, skySVG, tallySVG, startBoil } from './art.js';
 import * as sound from './sound.js';
 import { initLearn } from './learn.js';
 
@@ -27,7 +27,7 @@ sound.setOn(store.sound !== false);
 
 let G = null; // partida en curso: datos guardables + chess, thinking, hint...
 const persist = () => {
-  const { chess, thinking, hinting, hint, spinSide, ...data } = G;
+  const { chess, thinking, hinting, hint, spinSide, sleepy, say, oops, ...data } = G;
   store.game = data;
   save();
 };
@@ -35,18 +35,35 @@ const persist = () => {
 // ---------- pantallas ----------
 function show(id) {
   for (const s of $$('.screen')) s.hidden = s.id !== id;
+  document.body.dataset.screen = id;
   if (id === 'menu') paintMenu();
 }
 
 function paintMenu() {
   const g = store.game, btn = $('[data-go="resume"]');
+  const c = new Chess();
   let live = false;
   if (g?.moves?.length) {
-    const c = new Chess();
     try { g.moves.forEach(m => c.move(m)); live = !c.isGameOver(); } catch { live = false; }
   }
+  const wins = (store.results || []).filter(x => x.r === 'w').length;
+  $('#bot-wins').innerHTML = wins ? `${tallySVG(wins)}<span>${wins === 1 ? 'ganada' : 'ganadas'}</span>` : '';
   btn.hidden = !live;
-  if (live) $('#resume-info').textContent = `${g.mode === 'bot' ? `contra el bot ${LEVEL[g.level]}` : 'en pareja'} · jugada ${Math.ceil(g.moves.length / 2)}`;
+  if (!live) return;
+  $('#resume-art').innerHTML = miniBoard(c, g.mode === 'bot' && g.human === 'b');
+  $('#resume-info').textContent = `${g.mode === 'bot' ? `Contra el bot ${LEVEL[g.level]}` : 'En pareja'} · jugada ${Math.ceil(g.moves.length / 2)}`;
+}
+
+// foto chiquita de la partida guardada
+function miniBoard(c, flip) {
+  let p = '';
+  for (const row of c.board()) for (const q of row) {
+    if (!q) continue;
+    let x = q.square.charCodeAt(0) - 97, y = 8 - +q.square[1];
+    if (flip) { x = 7 - x; y = 7 - y; }
+    p += `<g transform="translate(${x * 100} ${y * 100})">${pieceArt(q.type, q.color)}</g>`;
+  }
+  return `<svg viewBox="-30 -30 860 860" aria-hidden="true">${boardArt()}${p}</svg>`;
 }
 
 function openSetup(mode) {
@@ -78,18 +95,18 @@ const flipped = () => (G.mode === 'bot' ? G.human === 'b' : G.spin === '1' && G.
 function newGame() {
   const o = store.opts;
   const human = o.mode === 'bot' ? (o.color === 'r' ? (Math.random() < 0.5 ? 'w' : 'b') : o.color) : 'w';
-  loadGame({ mode: o.mode, level: o.level, helps: o.helps, spin: o.spin, human, moves: [], undos: 0, hints: 0, flip: false });
+  loadGame({ mode: o.mode, level: o.level, helps: o.helps, spin: o.spin, human, moves: [], undos: 0, hints: 0, flip: false }, true);
   persist();
 }
 
-function loadGame(data) {
+function loadGame(data, intro = false) {
   const chess = new Chess();
   try { data.moves.forEach(m => chess.move(m)); } catch { data.moves = chess.history({ verbose: true }).map(m => m.lan); }
   G = { ...data, chess, thinking: false, hinting: false, hint: null, spinSide: chess.turn() };
   $('#dialog').hidden = true;
   show('game');
-  render();
-  if (!chess.isGameOver() && !humanTurn()) botTurn();
+  render(intro ? { intro: true } : undefined);
+  if (!chess.isGameOver() && !humanTurn()) setTimeout(botTurn, intro ? 1400 : 0);
 }
 
 const view = createBoard($('#board'), {
@@ -101,7 +118,43 @@ const view = createBoard($('#board'), {
   move: humanMove,
   showTargets: () => HELPS[G.helps].moves,
   sound: sound.play,
+  miss(from, to) {
+    sound.play('bonk');
+    const g = G;
+    g.say = whyIllegal(g.chess, from, to);
+    g.oops = { sq: from, kind: '?' };
+    render();
+    clearTimeout(g.sayTimer);
+    g.sayTimer = setTimeout(() => { g.say = g.oops = null; if (G === g) render(); }, 2800);
+  },
 });
+
+// explica con palabras de niño por qué esa jugada no vale
+const HOW = {
+  p: 'El peón camina derecho y solo come en diagonal.',
+  n: 'El caballo salta en forma de L.',
+  b: 'El alfil solo va en diagonal.',
+  r: 'La torre solo va en línea recta.',
+  q: 'La reina va en línea recta o en diagonal.',
+  k: 'El rey camina de una en una casilla.',
+};
+function whyIllegal(c, from, to) {
+  const p = c.get(from);
+  if (!p) return '';
+  const sqName = n => 'abcdefgh'[n & 15] + (8 - (n >> 4));
+  // ponytail: _moves es interno de chess.js (copiado local, versión fija)
+  const pseudo = c._moves({ legal: false, square: from }).some(m => sqName(m.to) === to);
+  if (c.inCheck()) return '¡Tu rey está en jaque! Primero tienes que salvarlo.';
+  if (pseudo) return 'No se puede: tu rey quedaría en peligro.';
+  const dx = to.charCodeAt(0) - from.charCodeAt(0), dy = +to[1] - +from[1], ax = Math.abs(dx), ay = Math.abs(dy);
+  if (p.type === 'k' && ax === 2 && !dy) return 'Para enrocar, ni el rey ni la torre deben haberse movido, y el camino debe estar libre.';
+  const ahead = dy * (p.color === 'w' ? 1 : -1) > 0;
+  if (p.type === 'p' && !dx && ahead && ay <= 2) return 'Hay alguien enfrente: el peón no puede pasar.';
+  if (p.type === 'p' && ax === 1 && ay === 1 && ahead) return 'El peón solo va en diagonal cuando come.';
+  const line = !dx || !dy, diag = ax === ay;
+  if ((p.type === 'r' && line) || (p.type === 'b' && diag) || (p.type === 'q' && (line || diag))) return 'Hay alguien en el camino.';
+  return HOW[p.type];
+}
 
 async function humanMove(from, to, dragged) {
   const p = G.chess.get(from);
@@ -223,22 +276,31 @@ function render(anim) {
     if (p.type === 'k' && p.color === turn && check) return 'scared';
     if (last && last.to === p.square && last.captured) return 'happy';
     if (h.danger && mine && p.color === turn && p.type !== 'k' && inDanger(c, p)) return 'scared';
-    return 'idle';
+    return G.sleepy && p.color === turn ? 'sleepy' : 'idle';
   };
-  const pieces = {};
-  let kingSq = null;
+  const pieces = {}, kings = {};
   for (const row of c.board()) for (const p of row) {
     if (!p) continue;
     pieces[p.square] = { type: p.type, color: p.color, mood: mood(p) };
-    if (p.type === 'k' && p.color === turn) kingSq = p.square;
+    if (p.type === 'k') kings[p.color] = p.square;
   }
-  view.draw({ pieces, flipped: flipped(), last: last && { from: last.from, to: last.to }, check: check ? kingSq : null, hint: G.hint, anim });
+  const emotes = [];
+  if (check && !over) emotes.push({ sq: kings[turn], kind: '!' });
+  if (over && c.isCheckmate()) emotes.push({ sq: kings[other(turn)], kind: 'heart' });
+  if (G.sleepy && !check) emotes.push({ sq: kings[turn], kind: 'z' });
+  if (G.oops && pieces[G.oops.sq]) emotes.push(G.oops);
+  view.draw({
+    pieces, emotes, flipped: flipped(), check: check ? kings[turn] : null, hint: G.hint, anim,
+    last: last && { from: last.from, to: last.to, color: last.color, knight: last.piece === 'n' },
+  });
+  world(c, turn, over);
 
   let s;
-  if (over) s = result().title;
+  if (G.say && !over) s = `<span class="say">${G.say}</span>`;
+  else if (over) s = result().title;
   else if (G.thinking) s = 'El bot está pensando<span class="dots"></span>';
   else if (G.hinting) s = 'Buscando una pista<span class="dots"></span>';
-  else if (G.mode === 'bot') s = 'Te toca';
+  else if (G.mode === 'bot') s = '¡Te toca!';
   else s = `Turno de <b class="ink-${turn}">${NAME[turn]}</b>`;
   if (check && !over) s += ' <b class="alert">¡Jaque!</b>';
   $('#status').innerHTML = s;
@@ -248,7 +310,8 @@ function render(anim) {
     const name = G.mode === 'bot' ? (color === G.human ? 'Tú' : `Bot ${LEVEL[G.level]}`) : NAME[color];
     const caps = hist.filter(m => m.captured && m.color === color).map(m => m.captured).sort((a, b) => VAL[b] - VAL[a]);
     el.className = `player ink-${color}${turn === color && !over ? ' on' : ''}`;
-    el.innerHTML = `<span class="who">${pieceSVG('k', color)}<span>${name}</span></span><span class="caps">${caps.map(t => pieceSVG(t, other(color))).join('')}</span>`;
+    // las piezas comidas se van a dormir junto a quien las comió
+    el.innerHTML = `<span class="who">${pieceSVG('k', color)}<span>${name}</span></span><span class="caps">${caps.map(t => pieceSVG(t, other(color), 'sleepy')).join('')}</span>`;
   }
 
   const undoBtn = $('[data-act="undo"]'), hintBtn = $('[data-act="hint"]');
@@ -261,9 +324,35 @@ function render(anim) {
   $('[data-act="again"]').hidden = !over;
 }
 
+// ---------- el mundo alrededor del tablero sigue la partida (tablet acostada) ----------
+const NOTES = [
+  ['¿Quién va ganando?', '¡Shhh, estoy pensando!'],
+  ['¡Qué buena jugada!', 'Ya lo sé :)'],
+  ['¿Y si me rindo?', '¡Nunca jamás!'],
+  ['El caballo me da miedo', 'A mí también'],
+  ['¿Tienes hambre?', 'Después del jaque mate'],
+  ['Mi peón quiere ser reina', '¡Que siga caminando!'],
+  ['¿Un descanso?', '¡Una jugada más!'],
+  ['Cuida a tu rey', 'Cuida tú al tuyo'],
+];
+function world(c, turn, over) {
+  const el = $('#world');
+  if (getComputedStyle(el).display === 'none') return;
+  const plies = G.moves.length, x = 14 + Math.min(plies, 100) * 2.3;
+  const note = plies >= 6 ? NOTES[(Math.floor(plies / 6) - 1) % NOTES.length] : null;
+  el.innerHTML = `
+    <div class="sky-row">${skySVG('sun', turn === 'w' && !over)}${skySVG('moon', turn === 'b' && !over)}</div>
+    <div class="snail-path"><svg viewBox="0 0 270 56" aria-hidden="true"><path d="M8 50L262 50" stroke="currentColor" stroke-width="2.4" stroke-dasharray="2 9" stroke-linecap="round"/><g transform="translate(${x} 2) scale(.66)">${doodle('snail')}</g></svg><small>jugada ${Math.ceil(plies / 2) || 0}</small></div>
+    ${note ? `<p class="sticky"><span class="ink-w">${note[0]}</span><span class="ink-b">${note[1]}</span></p>` : ''}`;
+}
+
 function gameOver() {
   if (!G.chess.isGameOver()) return;
   const r = result();
+  if (G.mode === 'bot') {
+    store.results = [{ level: G.level, r: r.happy ? 'w' : r.win ? 'l' : 'd' }, ...(store.results || [])].slice(0, 200);
+    save();
+  }
   sound.play(!r.win ? 'draw' : r.happy ? 'win' : 'lose');
   if (r.happy) confetti();
   dialog({
@@ -334,8 +423,19 @@ function drawDoodles() {
   svg.innerHTML = spots.map(([n, x, y], i) => `<g transform="translate(${x | 0} ${y | 0})"><g class="float f${i % 3}">${doodle(n)}</g></g>`).join('');
 }
 
+// si nadie toca la pantalla un rato, las piezas del que juega se duermen
+let lastTouch = Date.now();
+addEventListener('pointerdown', () => {
+  lastTouch = Date.now();
+  if (G?.sleepy) { G.sleepy = false; render(); }
+}, true);
+setInterval(() => {
+  if (!G || G.sleepy || document.body.dataset.screen !== 'game' || G.thinking || G.chess.isGameOver() || !humanTurn()) return;
+  if (Date.now() - lastTouch > 25000) { G.sleepy = true; render(); }
+}, 5000);
+
 // ---------- arranque ----------
-const learn = initLearn({ show, pickPromotion, sound });
+const learn = initLearn({ show, pickPromotion, sound, whyIllegal });
 
 const actions = {
   sound() { sound.setOn(!sound.on); store.sound = sound.on; save(); paintSound(); sound.play('select'); },
@@ -362,7 +462,33 @@ document.addEventListener('click', e => {
 });
 
 for (const i of $$('[data-icon]')) i.outerHTML = icon(i.dataset.icon);
-for (const b of $$('[data-art]')) b.insertAdjacentHTML('afterbegin', pieceSVG(b.dataset.art, 'w'));
+for (const b of $$('[data-art]')) b.insertAdjacentHTML('afterbegin', pieceSVG(b.dataset.art, b.dataset.color || 'w', b.dataset.mood));
+
+// marco a pluma en cada botón y tarjeta, también en los que se crean después; se redibuja si cambia de tamaño
+const FRAMED = '.btn, .seg button, .mode, .card';
+const drawFrame = el => {
+  const w = el.offsetWidth, h = el.offsetHeight;
+  return w && h ? frame(w, h, el.seed ??= Math.random() * 1e6 | 0) : '<svg class="frame" aria-hidden="true"></svg>';
+};
+const sized = new ResizeObserver(list => {
+  for (const { target: el } of list) {
+    const old = el.querySelector(':scope > .frame');
+    if (old && el.offsetWidth) old.outerHTML = drawFrame(el);
+  }
+});
+const addFrame = el => {
+  if (el.querySelector(':scope > .frame')) return;
+  el.insertAdjacentHTML('afterbegin', drawFrame(el));
+  sized.observe(el);
+};
+for (const el of $$(FRAMED)) addFrame(el);
+new MutationObserver(list => {
+  for (const m of list) for (const n of [m.target, ...m.addedNodes]) {
+    if (n.nodeType !== 1 || n instanceof SVGElement) continue; // el tablero cambia mucho; ahí no hay botones
+    if (n.matches(FRAMED)) addFrame(n);
+    for (const el of n.querySelectorAll(FRAMED)) addFrame(el);
+  }
+}).observe(document.body, { childList: true, subtree: true });
 $('.hero').innerHTML = pieceSVG('k', 'w', 'happy') + pieceSVG('p', 'b') + pieceSVG('q', 'b', 'happy');
 paintSound();
 drawDoodles();

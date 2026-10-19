@@ -14,6 +14,7 @@
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="preload" href="fonts/patrick-hand.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/kalam-bold.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/paper.css">
   <script type="module" src="js/app.js"></script>
 </head>
@@ -22,15 +23,29 @@
 
   <!-- MENÚ -->
   <main id="menu" class="screen">
-    <h1 class="title">Ajedrez <span>Garabato</span></h1>
-    <div class="hero" aria-hidden="true"></div>
-    <div class="stack">
-      <button class="btn big" data-go="resume" hidden>Seguir partida <small id="resume-info"></small></button>
-      <button class="btn big" data-go="bot">Jugar contra el bot</button>
-      <button class="btn big red" data-go="pair">Jugar en pareja</button>
-      <button class="btn" data-go="learn">Aprender a mover</button>
-    </div>
-    <button class="btn small ghost" data-act="sound"></button>
+    <header class="masthead">
+      <h1 class="title">Ajedrez <span>Garabato</span></h1>
+      <div class="hero" aria-hidden="true"></div>
+    </header>
+    <nav class="modes" aria-label="Elige cómo jugar">
+      <button class="mode hi" data-go="resume" hidden>
+        <span class="mode-art" id="resume-art"></span>
+        <span class="mode-txt"><b>Seguir partida</b><small id="resume-info"></small></span>
+      </button>
+      <button class="mode" data-go="bot">
+        <span class="mode-art" data-art="k" data-color="b"></span>
+        <span class="mode-txt"><b>Contra el bot</b><small>Fácil, medio o difícil</small><span class="wins" id="bot-wins"></span></span>
+      </button>
+      <button class="mode red" data-go="pair">
+        <span class="mode-art duo"><i data-art="p" data-color="w"></i><i data-art="p" data-color="b"></i></span>
+        <span class="mode-txt"><b>En pareja</b><small>Dos jugadores, un tablero</small></span>
+      </button>
+      <button class="mode" data-go="learn">
+        <span class="mode-art" data-art="b" data-color="w" data-mood="happy"></span>
+        <span class="mode-txt"><b>Aprender a mover</b><small>12 lecciones cortitas</small></span>
+      </button>
+    </nav>
+    <button class="btn ghost sound-toggle" data-act="sound"></button>
   </main>
 
   <!-- OPCIONES DE PARTIDA -->
@@ -47,9 +62,9 @@
     <div class="opt bot-only">
       <p>¿Con qué color juegas?</p>
       <div class="seg" data-opt="color">
-        <button data-val="w" class="ink-w">Azul <small>empieza</small></button>
-        <button data-val="b" class="ink-b">Rojo</button>
-        <button data-val="r">Sorpresa</button>
+        <button data-val="w" class="ink-w" data-art="k" data-color="w">Azul <small>empieza</small></button>
+        <button data-val="b" class="ink-b" data-art="k" data-color="b">Rojo</button>
+        <button data-val="r"><span class="qmark" aria-hidden="true">?</span>Sorpresa</button>
       </div>
     </div>
     <div class="opt">
@@ -64,8 +79,8 @@
     <div class="opt pair-only">
       <p>Tablero</p>
       <div class="seg" data-opt="spin">
-        <button data-val="0">Quieto</button>
-        <button data-val="1">Girar en cada turno</button>
+        <button data-val="0"><i data-icon="board"></i>Quieto</button>
+        <button data-val="1"><i data-icon="flip"></i>Gira cada turno</button>
       </div>
     </div>
     <div class="row">
@@ -84,6 +99,7 @@
     <div class="arena">
       <div class="player" id="p-top"></div>
       <div class="board-wrap"><svg id="board" class="board" role="img" aria-label="Tablero de ajedrez"></svg></div>
+      <div class="world" id="world"></div>
       <div class="player" id="p-bottom"></div>
     </div>
     <nav class="controls">

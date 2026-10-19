@@ -43,7 +43,7 @@ const KEY = 'ajedrez-garabato-lecciones';
 const doneSet = (() => { try { return new Set(JSON.parse(localStorage.getItem(KEY)) || []); } catch { return new Set(); } })();
 const $ = s => document.querySelector(s);
 
-export function initLearn({ show, pickPromotion, sound }) {
+export function initLearn({ show, pickPromotion, sound, whyIllegal }) {
   let L = null; // lección actual: { i, chess, count, done, last }
 
   const view = createBoard($('#lesson-board'), {
@@ -52,6 +52,10 @@ export function initLearn({ show, pickPromotion, sound }) {
     move,
     showTargets: () => true,
     sound: sound.play,
+    miss(from, to) {
+      sound.play('bonk');
+      $('#lesson-msg').textContent = whyIllegal(L.chess, from, to);
+    },
   });
 
   function draw(anim) {
@@ -90,7 +94,7 @@ export function initLearn({ show, pickPromotion, sound }) {
     if (castle) anim.moves.push(mv.isKingsideCastle() ? { from: 'h1', to: 'f1' } : { from: 'a1', to: 'd1' });
     if (mv.captured) anim.captured = { type: mv.captured, color: 'b', sq: mv.isEnPassant() ? to[0] + from[1] : to };
     L.count++;
-    L.last = { from, to };
+    L.last = { from, to, color: 'w', knight: p.type === 'n' };
 
     const reds = () => c.board().flat().filter(q => q && q.color === 'b').length;
     const ok = { eat: () => reds() === 0, check: () => c.inCheck(), mate: () => c.isCheckmate(), castle: () => castle, promote: () => !!mv.promotion, ep: () => mv.isEnPassant() }[les.goal]();

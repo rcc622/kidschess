@@ -1,7 +1,7 @@
 // Offline: guarda todo al instalar; luego sirve de la caché y actualiza en segundo plano.
-const CACHE = 'garabato-v1';
+const CACHE = 'garabato-v2';
 const FILES = [
-  './', 'index.html', 'manifest.json', 'css/paper.css', 'fonts/patrick-hand.woff2',
+  './', 'index.html', 'manifest.json', 'css/paper.css', 'fonts/patrick-hand.woff2', 'fonts/kalam-bold.woff2',
   'js/app.js', 'js/art.js', 'js/board.js', 'js/bot.js', 'js/chess.js', 'js/learn.js', 'js/sound.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',
 ];

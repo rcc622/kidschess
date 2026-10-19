@@ -140,6 +140,7 @@ function face({ eyes, mouth: [mx, my], s }, mood, ink, r) {
     if (mood === 'happy') out += st(wob(`M${ex - 3 * s} ${ey + 1}Q${ex} ${ey - 4 * s} ${ex + 3 * s} ${ey + 1}`, r, 0.4));
     else if (mood === 'scared') out += st(blob(ex, ey, 3.8 * s, 4.2 * s, r, 0.05), 1.8, PAPER) + st(blob(ex, ey + 0.5, 1.2, 1.2, r, 0), 1.8, ink);
     else if (mood === 'dead') out += st(wob(`M${ex - 3} ${ey - 3}L${ex + 3} ${ey + 3}M${ex + 3} ${ey - 3}L${ex - 3} ${ey + 3}`, r, 0.4));
+    else if (mood === 'sleepy') out += st(wob(`M${ex - 3 * s} ${ey}Q${ex} ${ey + 3 * s} ${ex + 3 * s} ${ey}`, r, 0.3));
     else out += st(blob(ex, ey, 2.3 * s, 2.6 * s, r, 0.05), 1.2, ink);
   }
   if (mood === 'happy') {
@@ -151,6 +152,8 @@ function face({ eyes, mouth: [mx, my], s }, mood, ink, r) {
     out += st(wob(`M${ex + 9} ${ey - 9}Q${ex + 6} ${ey - 3} ${ex + 9} ${ey - 2}Q${ex + 12} ${ey - 3} ${ex + 9} ${ey - 9}Z`, r, 0.3), 1.4, '#cfe3ff');
   } else if (mood === 'dead') {
     out += st(wob(`M${mx - 5 * s} ${my}L${mx + 5 * s} ${my + 1}`, r, 0.5));
+  } else if (mood === 'sleepy') {
+    out += st(blob(mx, my + 1, 1.8 * s, 2.2 * s, r, 0.05), 1.8);
   } else {
     out += st(wob(`M${mx - 4.5 * s} ${my}Q${mx} ${my + 4 * s} ${mx + 4.5 * s} ${my}`, r, 0.4));
   }
@@ -199,11 +202,36 @@ export function boardArt() {
   for (let i = 0; i <= 8; i++) {
     grid += line(-4, i * 100, 804, i * 100, r, 2.5) + line(i * 100, -4, i * 100, 804, r, 2.5);
   }
-  const frame = wob('M-14 -14L814 -14L814 814L-14 814Z', r, 3);
+  const border = wob('M-14 -14L814 -14L814 814L-14 814Z', r, 3);
   return `<path d="${wob('M-14 -14L814 -14L814 814L-14 814Z', r, 3)}" fill="#fbf8ee"/>
-    <path d="${hatch}" stroke="${PENCIL}" stroke-width="2.2" opacity=".42" fill="none"/>
-    <path d="${grid}" stroke="${PENCIL}" stroke-width="2.6" opacity=".75" fill="none"/>
-    <path d="${frame}" stroke="${INK.w}" stroke-width="4" fill="none" stroke-linejoin="round"/>`;
+    <path class="hatch" pathLength="1" d="${hatch}" stroke="${PENCIL}" stroke-width="2.2" opacity=".42" fill="none"/>
+    <path pathLength="1" d="${grid}" stroke="${PENCIL}" stroke-width="2.6" opacity=".75" fill="none"/>
+    <path pathLength="1" d="${border}" stroke="${INK.w}" stroke-width="4" fill="none" stroke-linejoin="round"/>
+    <path d="${TAPE}" transform="translate(4 4) rotate(-38)" fill="${TAPE_FILL}"/>
+    <path d="${TAPE}" transform="translate(796 4) rotate(36)" fill="${TAPE_FILL}"/>`;
+}
+
+// cinta adhesiva con puntas rasgadas
+const TAPE = 'M-55 -15L55 -15L52 -9L56 -3L52 3L56 9L55 15L-55 15L-52 9L-56 3L-52 -3L-56 -9Z';
+const TAPE_FILL = 'rgba(246, 222, 150, .8)';
+
+// ---------- marco a pluma para botones y tarjetas ----------
+// se dibuja en píxeles reales del elemento: el temblor es igual en un botón chico o en una tarjeta grande
+export function frame(w, h, seed) {
+  let out = '';
+  const bow = len => Math.min(3, len * 0.012);
+  for (let fr = 0; fr < FRAMES; fr++) {
+    const r = rng(seed + fr * 101), j = a => (r() - 0.5) * 2 * a;
+    const P = [[3, 3], [w - 3, 2.5], [w - 2.5, h - 3], [2.5, h - 2.5]].map(([x, y]) => [x + j(1.5), y + j(1.5)]);
+    let d = `M${f(P[0][0])} ${f(P[0][1])}`;
+    for (let i = 1; i <= 4; i++) {
+      const a = P[i - 1], b = P[i % 4], k = bow(Math.hypot(b[0] - a[0], b[1] - a[1]));
+      d += `Q${f((a[0] + b[0]) / 2 + j(k))} ${f((a[1] + b[1]) / 2 + j(k))} ${f(b[0])} ${f(b[1])}`;
+    }
+    d += `L${f(P[0][0] + Math.min(16, w * 0.12))} ${f(P[0][1] + j(1.2))}`; // se pasa del inicio, como al cerrar con pluma
+    out += `<g class="v${fr}"><path class="fill" d="${wob(d, r, 1.5)}"/><path class="ink" d="${d}"/></g>`;
+  }
+  return `<svg class="frame" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true">${out}</svg>`;
 }
 
 // ---------- marcas sobre el tablero (x,y = esquina de la casilla) ----------
@@ -232,6 +260,26 @@ export const marks = {
     const h = (da) => `M${f(ex)} ${f(ey)}L${f(ex - Math.cos(ang + da) * 26)} ${f(ey - Math.sin(ang + da) * 26)}`;
     return `<path d="${line(x1, y1, ex, ey, r, 4)}${h(0.5)}${h(-0.5)}" fill="none" stroke="#f08c00" stroke-width="9" opacity=".85" stroke-linecap="round" stroke-linejoin="round"/>`;
   },
+  trail: (x1, y1, x2, y2, color, knight) => { // puntitos por donde pasó la pieza (en L si es caballo)
+    const a = [x1 + 50, y1 + 50], b = [x2 + 50, y2 + 50];
+    const pts = knight ? [a, Math.abs(b[1] - a[1]) > Math.abs(b[0] - a[0]) ? [a[0], b[1]] : [b[0], a[1]], b] : [a, b];
+    let d = '';
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [ax, ay] = pts[i], [bx, by] = pts[i + 1], n = Math.max(1, Math.round(Math.hypot(bx - ax, by - ay) / 26));
+      for (let k = i ? 0 : 1; k < n; k++) d += `M${f(ax + (bx - ax) * k / n)} ${f(ay + (by - ay) * k / n)}l0.1 0`;
+    }
+    return `<path d="${d}" stroke="${color}" stroke-width="9" stroke-linecap="round" opacity=".4" fill="none"/>`;
+  },
+  emote: (x, y, kind, seed) => { // globito arriba a la derecha de la casilla
+    const r = rng(seed), cx = x + 80, cy = y + 18;
+    const E = {
+      z: [`M${cx - 6} ${cy + 4}L${cx + 1} ${cy + 4}L${cx - 6} ${cy + 11}L${cx + 1} ${cy + 11}M${cx + 4} ${cy - 8}L${cx + 13} ${cy - 8}L${cx + 4} ${cy + 1}L${cx + 13} ${cy + 1}`, PENCIL, 'none', 3],
+      '!': [`M${cx} ${cy - 14}L${cx + 1} ${cy + 4}M${cx + 1} ${cy + 13}l0.1 0`, '#d9534f', 'none', 6],
+      '?': [`M${cx - 7} ${cy - 7}Q${cx - 7} ${cy - 16} ${cx} ${cy - 16}Q${cx + 8} ${cy - 16} ${cx + 8} ${cy - 9}Q${cx + 8} ${cy - 4} ${cx} ${cy}L${cx} ${cy + 4}M${cx} ${cy + 13}l0.1 0`, PENCIL, 'none', 5],
+      heart: [`M${cx} ${cy + 12}C${cx - 16} ${cy + 2} ${cx - 14} ${cy - 12} ${cx - 6} ${cy - 12}C${cx - 2} ${cy - 12} ${cx} ${cy - 8} ${cx} ${cy - 6}C${cx} ${cy - 8} ${cx + 2} ${cy - 12} ${cx + 6} ${cy - 12}C${cx + 14} ${cy - 12} ${cx + 16} ${cy + 2} ${cx} ${cy + 12}Z`, '#a4161a', '#f2a0a0', 3],
+    }[kind];
+    return `<path class="emote" d="${wob(E[0], r, 0.8)}" stroke="${E[1]}" fill="${E[2]}" stroke-width="${E[3]}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  },
   poof: (x, y, seed) => { // espiral + polvito de captura
     const r = rng(seed), cx = x + 50, cy = y + 50;
     let pts = [];
@@ -258,6 +306,39 @@ export function doodle(name, scale = 1) {
   return `<g transform="scale(${scale})" fill="none" stroke="${PENCIL}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${out}</g>`;
 }
 
+// ---------- sol y luna del mundo (despierto = le toca a ese bando) ----------
+export function skySVG(kind, awake) {
+  const sun = kind === 'sun', ink = sun ? INK.w : INK.b, fill = sun ? '#fff1c4' : '#f3e6f0';
+  let out = '';
+  for (let fr = 0; fr < FRAMES; fr++) {
+    const r = rng(hash(kind) + fr * 37);
+    let g = '';
+    if (sun) for (let i = 0; i < 12; i++) {
+      const t = i * Math.PI / 6;
+      g += `<path d="${line(50 + Math.cos(t) * 31, 50 + Math.sin(t) * 31, 50 + Math.cos(t) * 41, 50 + Math.sin(t) * 41, r, 1.2)}" stroke="${ink}" stroke-width="3"/>`;
+    }
+    g += `<path d="${blob(50, 50, 25, 25, r, 0.04)}" fill="${fill}" stroke="${ink}" stroke-width="3.2"/>`;
+    if (!sun) g += `<path d="${blob(62, 38, 4, 3.5, r)}${blob(36, 62, 3, 3, r)}" fill="none" stroke="${ink}" stroke-width="1.8" opacity=".6"/>`;
+    g += face({ eyes: [[42, 47], [58, 47]], mouth: [50, 60], s: 1.1 }, awake ? 'happy' : 'sleepy', ink, r);
+    out += `<g class="v${fr}">${g}</g>`;
+  }
+  const z = awake ? '' : marks.emote(-10, -8, 'z', 3);
+  return `<svg viewBox="-5 -15 110 115" class="sky${awake ? ' awake' : ''}" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round">${out}</g>${z}</svg>`;
+}
+
+// palitos de conteo (grupos de 5 tachados), como en un cuaderno
+export function tallySVG(n) {
+  n = Math.min(n, 30);
+  const r = rng(n * 17 + 3);
+  let d = '';
+  for (let i = 0; i < n; i++) {
+    const g = Math.floor(i / 5), k = i % 5, x = g * 34 + k * 6 + 4;
+    d += k < 4 ? line(x, 5, x, 27, r, 1) : line(g * 34 + 1, 22, g * 34 + 26, 9, r, 1);
+  }
+  const w = Math.ceil(n / 5) * 34;
+  return `<svg class="tally" viewBox="0 0 ${w} 32" width="${w * 0.8}" height="26" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>`;
+}
+
 // ---------- íconos de botones ----------
 const ICONS = {
   menu: 'M6 9L26 8M6 16L26 16M6 23L26 24',
@@ -267,6 +348,7 @@ const ICONS = {
   sound: 'M4 12L9 12L16 6L16 26L9 20L4 20ZM21 11C24 14 24 18 21 21M24 7C30 12 30 20 24 25',
   mute: 'M4 12L9 12L16 6L16 26L9 20L4 20ZM21 12L28 20M28 12L21 20',
   back: 'M14 7L5 16L14 25M5 16L27 16',
+  board: 'M5 5L27 5L27 27L5 27ZM5 16L27 16M16 5L16 27',
   again: 'M26 16C26 23 21 27 16 27C10 27 5 22 5 16C5 10 10 5 16 5C20 5 23 7 25 10M25 3L25 10L18 10',
 };
 
