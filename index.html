@@ -79,6 +79,13 @@
         </div>
       </div>
       <div class="opt">
+        <p>Voz de Lápiz</p>
+        <div class="seg" data-opt="voz">
+          <button data-val="mujer"><i data-icon="voice"></i>Mujer</button>
+          <button data-val="hombre"><i data-icon="voice"></i>Hombre</button>
+        </div>
+      </div>
+      <div class="opt">
         <p>Música</p>
         <div class="seg wrap" data-opt="musicStyle">
           <button data-val="infantil"><i data-icon="music"></i>Infantil <small>para peques</small></button>
@@ -120,7 +127,17 @@
         <button data-val="r"><span class="qmark" aria-hidden="true">?</span>Sorpresa</button>
       </div>
     </div>
-    <div class="opt bot-only">
+    <div class="opt">
+      <label class="check"><input type="checkbox" data-check="classic"><span><b>Modo clásico</b>Reglas de torneo: cada jugador tiene su reloj y pierde si se le acaba el tiempo. Sin modo guía, sin deshacer y sin pistas.</span></label>
+      <div class="seg wrap clock-opt" data-opt="clock">
+        <button data-val="3">3 min</button>
+        <button data-val="5">5 min</button>
+        <button data-val="10">10 min</button>
+        <button data-val="15">15 min</button>
+        <button data-val="30">30 min</button>
+      </div>
+    </div>
+    <div class="opt bot-only guide-opt">
       <label class="check"><input type="checkbox" data-check="guide"><span><b>Modo guía</b>Lápiz te enseña una buena jugada en cada turno y te avisa antes de que te coman una pieza.</span></label>
     </div>
     <div class="opt">
@@ -141,6 +158,7 @@
         <button data-val="robots" data-art="k" data-set="robots">Robots</button>
         <button data-val="dinos" data-art="k" data-set="dinos">Dinos</button>
         <button data-val="espacio" data-art="k" data-set="espacio">Espacio</button>
+        <button data-val="clasicas" data-art="k" data-set="clasicas">Clásicas</button>
       </div>
     </div>
     <div class="opt pair-only">

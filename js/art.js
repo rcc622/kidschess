@@ -38,7 +38,7 @@ export const PENCIL = '#555';
 const FRAMES = 3;
 
 import { rng, hash, f, wob, smooth, blob, line, star, petal, dots } from './ink.js';
-import { BOSQUE, MAR, ROBOTS, DINOS, ESPACIO } from './animals.js';
+import { BOSQUE, MAR, ROBOTS, DINOS, ESPACIO, CLASICAS } from './animals.js';
 
 // ---------- piezas: cada parte = [path o fn(r), relleno, grosor] ----------
 // rellenos: t = tinta clara del bando, i = tinta, p = papel, n = sin relleno
@@ -153,7 +153,7 @@ function face({ eyes, mouth, s, lashes, brows }, mood, ink, r, big = false) {
 
 // ---------- juegos de piezas ----------
 
-export const SETS = { garabato: { name: 'Garabato', eyes: 'dot', ...PIECES }, bosque: BOSQUE, mar: MAR, robots: ROBOTS, dinos: DINOS, espacio: ESPACIO };
+export const SETS = { garabato: { name: 'Garabato', eyes: 'dot', ...PIECES }, bosque: BOSQUE, mar: MAR, robots: ROBOTS, dinos: DINOS, espacio: ESPACIO, clasicas: CLASICAS };
 export let pieceSet = 'garabato';
 export function setPieceSet(name) { if (SETS[name]) pieceSet = name; }
 

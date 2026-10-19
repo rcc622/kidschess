@@ -73,6 +73,14 @@ const THEMED = {
     'El rey Saturno camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan. Cómete a los rojos.',
   ],
 };
+THEMED.clasicas = [
+  'El peón camina derecho, de una en una. En su primer paso puede avanzar dos. ¡Pero come en diagonal! Cómete a los rojos.',
+  'La torre corre en línea recta: adelante, atrás y a los lados, todas las casillas que quiera. Cómete a los rojos.',
+  'El alfil se mueve en diagonal, todas las casillas que quiera. ¡Siempre se queda en casillas del mismo color! Cómete a los rojos.',
+  'El caballo salta en forma de L: dos casillas derecho y una de lado. ¡Es el único que puede saltar sobre otras piezas! Cómete a los rojos.',
+  'La reina es la más poderosa: se mueve como torre y como alfil juntos. Cómete a los rojos.',
+  'El rey camina una casilla hacia cualquier lado. Nunca puede pararse donde lo atacan. Cómete a los rojos.',
+];
 const themed = i => THEMED[pieceSet]?.[i];
 // los textos nombran a "los rojos"; con otros colores de piezas se cambian por los del esquema
 const recolor = t => (scheme === 'tinta' ? t : t.replace('los rojos', SCHEMES[scheme].them).replace(/(rey|peón) rojo/g, `$1 ${SCHEMES[scheme].foe}`));

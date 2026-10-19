@@ -9,8 +9,7 @@ const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const other = c => (c === 'w' ? 'b' : 'w');
 const NAME = c => SCHEMES[scheme].names[c]; // Azul/Rojo, Blancas/Negras o Naranja/Morado
-// las frases grabadas dicen "azul" y "rojo": con otros colores se usa la versión sin color
-const sideVoice = (base, c) => (scheme === 'tinta' ? `${base}_${c === 'w' ? 'azul' : 'rojo'}` : base === 'turno' ? 'te_toca' : 'mate_ganaste');
+const sideVoice = (base, c) => `${base}_${NAME(c).toLowerCase()}`; // turno_azul, mate_blancas…
 const LEVEL = { 0: 'dormilón', 1: 'fácil', 2: 'medio', 3: 'difícil', 4: 'experto' };
 const VAL = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 100 };
 const PIECE_NAME = { q: 'Reina', r: 'Torre', b: 'Alfil', n: 'Caballo' };
@@ -23,7 +22,8 @@ const HELPS = {
 // ---------- guardado ----------
 const KEY = 'ajedrez-garabato-v1';
 const store = (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } })();
-store.opts = { mode: 'bot', level: '1', color: 'w', helps: 'muchas', spin: '0', set: 'garabato', guide: false, scheme: 'tinta', musicStyle: 'infantil', ...store.opts };
+store.opts = { mode: 'bot', level: '1', color: 'w', helps: 'muchas', spin: '0', set: 'garabato', guide: false, classic: false, clock: '10', scheme: 'tinta', musicStyle: 'infantil', voz: 'mujer', ...store.opts };
+sound.setVoice(store.opts.voz);
 setPieceSet(store.opts.set);
 sound.setMusicStyle(store.opts.musicStyle);
 function applyScheme() {
@@ -39,7 +39,7 @@ sound.setPrefs(store.audio);
 
 let G = null; // partida en curso: datos guardables + chess, thinking, hint...
 const persist = () => {
-  const { chess, thinking, hinting, hint, spinSide, sleepy, say, oops, sayTimer, guideAt, ...data } = G;
+  const { chess, thinking, hinting, hint, spinSide, sleepy, say, oops, sayTimer, guideAt, tickAt, lowSaid, ...data } = G;
   store.game = data;
   save();
 };
@@ -57,7 +57,7 @@ function paintMenu() {
   const c = new Chess();
   let live = false;
   if (g?.moves?.length) {
-    try { g.moves.forEach(m => c.move(m)); live = !c.isGameOver() && bareLeft(g) > 0; } catch { live = false; }
+    try { g.moves.forEach(m => c.move(m)); live = !c.isGameOver() && bareLeft(g) > 0 && !g.flag; } catch { live = false; }
   }
   const wins = (store.results || []).filter(x => x.r === 'w').length;
   $('#bot-wins').innerHTML = wins ? `${tallySVG(wins)}<span>${wins === 1 ? 'ganada' : 'ganadas'}</span>` : '';
@@ -124,6 +124,9 @@ function paintSetup() {
   for (const seg of $$('.seg')) for (const b of $$('button', seg)) b.setAttribute('aria-pressed', b.dataset.val === o[seg.dataset.opt]);
   $('#helps-note').textContent = HELPS[o.helps].note;
   $('[data-check="guide"]').checked = o.guide;
+  $('[data-check="classic"]').checked = o.classic;
+  $('.clock-opt').hidden = !o.classic;
+  if (o.classic) $('.guide-opt').hidden = true;
   for (const el of $$('[data-side]')) el.textContent = NAME(el.dataset.side);
 }
 
@@ -157,7 +160,8 @@ const flipped = () => (G.mode === 'bot' ? G.human === 'b' : G.spin === '1' && G.
 function newGame() {
   const o = store.opts;
   const human = o.mode === 'bot' ? (o.color === 'r' ? (Math.random() < 0.5 ? 'w' : 'b') : o.color) : 'w';
-  loadGame({ mode: o.mode, level: o.level, helps: o.helps, spin: o.spin, human, moves: [], undos: 0, hints: 0, flip: false, guide: o.mode === 'bot' && o.guide, bareAt: null }, true);
+  const clock = o.classic ? { w: o.clock * 60000, b: o.clock * 60000 } : null;
+  loadGame({ mode: o.mode, level: o.level, helps: o.helps, spin: o.spin, human, moves: [], undos: 0, hints: 0, flip: false, guide: o.mode === 'bot' && o.guide && !o.classic, classic: o.classic, clock, flag: null, bareAt: null }, true);
   persist();
 }
 
@@ -173,7 +177,7 @@ function loadGame(data, intro = false) {
   if (ended()) return;
   if (!humanTurn()) setTimeout(botTurn, intro ? 1400 : 0);
   else {
-    if (intro) setTimeout(() => G.chess === chess && sound.say(G.guide ? 'guia_hola' : G.mode === 'pair' ? sideVoice('turno', 'w') : 'te_toca'), 1300);
+    if (intro) setTimeout(() => G.chess === chess && sound.say(G.classic ? 'clasico_hola' : G.guide ? 'guia_hola' : G.mode === 'pair' ? sideVoice('turno', 'w') : 'te_toca'), 1300);
     setTimeout(() => G.chess === chess && guideTurn(), intro ? 2600 : 600);
   }
 }
@@ -181,10 +185,11 @@ function loadGame(data, intro = false) {
 // ---------- final de rey solo: cuenta de jugadas para dar jaque mate; si se acaban, tablas ----------
 const bareLimit = g => (g.mode === 'pair' || +g.level <= 1 ? 25 : 20);
 const bareSide = c => ['w', 'b'].find(col => c.board().flat().every(p => !p || p.color !== col || p.type === 'k'));
-const bareLeft = g => (g.bareAt == null ? Infinity : bareLimit(g) - Math.floor((g.moves.length - g.bareAt) / 2));
-const ended = () => G.chess.isGameOver() || bareLeft(G) <= 0;
+const bareLeft = g => (g.bareAt == null || g.classic ? Infinity : bareLimit(g) - Math.floor((g.moves.length - g.bareAt) / 2));
+const ended = () => G.chess.isGameOver() || bareLeft(G) <= 0 || !!G.flag;
 function checkBare(announce) {
   const g = G, side = bareSide(g.chess);
+  if (g.classic) return;
   if (!side) { g.bareAt = null; return; }
   if (g.bareAt != null && g.bareAt <= g.moves.length) return;
   g.bareAt = g.moves.length;
@@ -288,7 +293,7 @@ function confirmRisk(type, promotion) {
 }
 
 // modo guía (y finales fáciles contra un rey solo): Lápiz enseña solito una buena jugada en cada turno
-const guiding = () => G.mode === 'bot' && (G.guide || (+G.level <= 1 && bareSide(G.chess) === other(G.human)));
+const guiding = () => G.mode === 'bot' && !G.classic && (G.guide || (+G.level <= 1 && bareSide(G.chess) === other(G.human)));
 async function guideTurn() {
   const g = G, c = g.chess, n = g.moves.length;
   if (!guiding() || ended() || !humanTurn() || g.thinking || g.guideAt === n) return;
@@ -305,6 +310,8 @@ async function guideTurn() {
 
 function play(m, dragged = false) {
   const g = G, c = g.chess;
+  if (g.flag) return;
+  tickClock();
   let mv;
   try { mv = c.move(m); } catch { return render(); }
   g.hint = null;
@@ -361,8 +368,8 @@ async function botTurn() {
 
 const helps = () => HELPS[G.helps];
 const humanMoved = () => G.moves.length > (G.mode === 'bot' && G.human === 'b' ? 1 : 0);
-const canUndo = () => G.undos < helps().undo && humanMoved() && !G.hinting;
-const canHint = () => G.hints < helps().hints && humanTurn() && !G.thinking && !G.hinting && !ended();
+const canUndo = () => !G.classic && G.undos < helps().undo && humanMoved() && !G.hinting;
+const canHint = () => !G.classic && G.hints < helps().hints && humanTurn() && !G.thinking && !G.hinting && !ended();
 
 function undo() {
   if (!canUndo()) return;
@@ -404,8 +411,22 @@ function inDanger(c, p) {
   return Math.min(...att.map(s => VAL[c.get(s).type])) < VAL[p.type]; // la ataca alguien que vale menos
 }
 
+// ¿le quedan piezas para poder dar mate? (si no, perder por tiempo es tablas)
+const canMate = (c, col) => {
+  const mine = c.board().flat().filter(p => p && p.color === col && p.type !== 'k');
+  return mine.some(p => 'pqr'.includes(p.type)) || mine.length >= 2;
+};
+
 function result() {
   const c = G.chess;
+  if (G.flag) {
+    const win = other(G.flag);
+    if (!canMate(c, win)) return { title: 'Tablas', text: 'Se acabó el tiempo, pero no quedan piezas para dar jaque mate.', win: null, happy: false, voice: 'tiempo_tablas' };
+    if (G.mode === 'pair') return { title: `¡Gana ${NAME(win)}!`, text: `Se le acabó el tiempo a ${NAME(G.flag)}.`, win, happy: true, voice: sideVoice('tiempo', win) };
+    return win === G.human
+      ? { title: '¡Ganaste!', text: 'Al bot se le acabó el tiempo.', win, happy: true, voice: 'tiempo_ganaste' }
+      : { title: 'Ganó el bot', text: 'Se te acabó el tiempo. ¡La próxima le ganas!', win, happy: false, voice: 'tiempo_bot' };
+  }
   if (!c.isGameOver()) return { title: 'Tablas', text: 'Se acabaron las jugadas para dar jaque mate.', win: null, happy: false, out: true };
   if (c.isCheckmate()) {
     const win = other(c.turn());
@@ -470,18 +491,49 @@ function render(anim) {
     const caps = hist.filter(m => m.captured && m.color === color).map(m => m.captured).sort((a, b) => VAL[b] - VAL[a]);
     el.className = `player ink-${color}${turn === color && !over ? ' on' : ''}`;
     // las piezas comidas se van a dormir junto a quien las comió
-    el.innerHTML = `<span class="who">${pieceSVG('k', color)}<span>${name}</span></span><span class="caps">${caps.map(t => pieceSVG(t, other(color), 'sleepy')).join('')}</span>`;
+    el.innerHTML = `<span class="who">${pieceSVG('k', color)}<span>${name}</span></span>${G.clock ? `<span class="clock" data-clock="${color}"></span>` : ''}<span class="caps">${caps.map(t => pieceSVG(t, other(color), 'sleepy')).join('')}</span>`;
   }
+  paintClocks();
 
   const undoBtn = $('[data-act="undo"]'), hintBtn = $('[data-act="hint"]');
   undoBtn.disabled = !canUndo();
-  undoBtn.hidden = h.undo === 0;
+  undoBtn.hidden = h.undo === 0 || G.classic;
   $('span', undoBtn).textContent = h.undo === Infinity ? 'Deshacer' : `Deshacer (${Math.max(0, h.undo - G.undos)})`;
-  hintBtn.hidden = h.hints === 0;
+  hintBtn.hidden = h.hints === 0 || G.classic;
   hintBtn.disabled = !canHint();
   $('span', hintBtn).textContent = h.hints === Infinity ? 'Pista' : `Pista (${Math.max(0, h.hints - G.hints)})`;
   $('[data-act="again"]').hidden = !over;
 }
+
+// ---------- reloj del modo clásico: corre el del que tiene el turno; se pausa fuera de la partida ----------
+const fmt = ms => { const s = Math.ceil(Math.max(0, ms) / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+function paintClocks() {
+  if (!G?.clock) return;
+  for (const el of $$('[data-clock]')) {
+    const ms = G.clock[el.dataset.clock];
+    el.textContent = fmt(ms);
+    el.classList.toggle('low', ms < 30000);
+  }
+}
+function tickClock() {
+  const g = G, now = performance.now();
+  if (!g?.clock || g.flag || g.chess.isGameOver() || document.hidden || document.body.dataset.screen !== 'game') { if (g) g.tickAt = null; return; }
+  const turn = g.chess.turn();
+  if (g.tickAt != null) g.clock[turn] -= now - g.tickAt;
+  g.tickAt = now;
+  if (g.clock[turn] < 30000 && !g.lowSaid?.[turn] && humanTurn()) { (g.lowSaid ??= {})[turn] = true; sound.say('poco_tiempo'); }
+  if (g.clock[turn] <= 0) {
+    g.clock[turn] = 0;
+    g.flag = turn;
+    g.thinking = false;
+    persist();
+    render();
+    setTimeout(() => G === g && gameOver(), 600);
+    return;
+  }
+  paintClocks();
+}
+setInterval(tickClock, 200);
 
 // ---------- el mundo alrededor del tablero sigue la partida (tablet acostada) ----------
 const NOTES = [
@@ -519,7 +571,7 @@ function gameOver() {
     save();
   }
   if (!r.win) sound.play('draw'); else if (!r.happy) sound.play('lose');
-  sound.say(!r.win ? (r.out ? 'tablas_jugadas' : 'tablas') : G.mode === 'pair' ? sideVoice('mate', r.win) : r.happy ? 'mate_ganaste' : 'mate_bot');
+  sound.say(r.voice || (!r.win ? (r.out ? 'tablas_jugadas' : 'tablas') : G.mode === 'pair' ? sideVoice('mate', r.win) : r.happy ? 'mate_ganaste' : 'mate_bot'));
   if (r.happy) confetti();
   dialog({
     title: r.title,
@@ -661,6 +713,7 @@ document.addEventListener('click', e => {
     if (seg.dataset.opt === 'set') { setPieceSet(b.dataset.val); paintArt(); sound.say(`tema_${b.dataset.val}`); }
     if (seg.dataset.opt === 'scheme') { applyScheme(); paintArt(); }
     if (seg.dataset.opt === 'musicStyle') { sound.unlock(); sound.setMusicStyle(b.dataset.val); }
+    if (seg.dataset.opt === 'voz') { sound.setVoice(b.dataset.val); sound.say('hola'); warmVoice(); }
     save(); paintSetup(); sound.play('select');
   }
 });
@@ -670,6 +723,7 @@ document.addEventListener('change', e => {
   if (!k) return;
   store.opts[k] = e.target.checked;
   save();
+  paintSetup();
   sound.play('select');
 });
 
@@ -709,6 +763,8 @@ addEventListener('resize', drawDoodles);
 startBoil();
 show('menu');
 
+// sin internet: el service worker guarda la app y la voz de Lápiz elegida
+const warmVoice = () => navigator.serviceWorker?.ready.then(r => r.active?.postMessage({ voz: store.opts.voz }));
 if ('serviceWorker' in navigator && location.hostname !== 'localhost') {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.register('sw.js').then(warmVoice).catch(() => {});
 }

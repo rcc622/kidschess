@@ -81,11 +81,15 @@ function speak(text) {
   ss.speak(u);
 }
 
+// Lápiz habla con voz de mujer o de hombre (audio/voz/<mujer|hombre>/)
+let voz = 'mujer';
+export const setVoice = v => { voz = v; };
+
 export async function say(key, text) {
   if (prefs.mute || !prefs.voice) return;
   if (!key) return speak(text);
   try {
-    const buf = await load(`audio/voz/${key}.mp3`);
+    const buf = await load(`audio/voz/${voz}/${key}.mp3`);
     if (prefs.mute || !prefs.voice) return;
     stopVoice();
     const s = shot(buf, voiceBus);
@@ -119,7 +123,22 @@ export async function creature(name, set = 'garabato') {
     if (SFX[set]?.includes(name)) file = `${set}_${name}`;
     else if (set !== 'bosque') return critter(set, name); // al bosque le falta el caballo: usa el de Garabato
   }
-  try { shot(await load(`audio/sfx/${file}.mp3`), master, 0.7); } catch { /* nada */ }
+  try { clip(await load(`audio/sfx/${file}.mp3`), name === 'k' ? 0.35 : 0.5); } catch { /* nada */ }
+}
+
+// sonido de personaje cortito (máx. 0.8 s, se apaga suave) y sin encimarse con el anterior
+let lastClip = null;
+function clip(buf, vol) {
+  const c = ac(), g = c.createGain(), s = c.createBufferSource(), now = c.currentTime, end = Math.min(buf.duration, 0.8);
+  try { lastClip?.stop(); } catch { /* ya terminó */ }
+  g.gain.setValueAtTime(vol, now);
+  g.gain.setValueAtTime(vol, now + end * 0.6);
+  g.gain.linearRampToValueAtTime(0.0001, now + end);
+  s.buffer = buf;
+  s.connect(g).connect(master);
+  s.start(now);
+  s.stop(now + end + 0.02);
+  lastClip = s;
 }
 
 // personajes sin grabación: bip-bup de robot, gruñido de dino, theremin espacial (peón agudo … rey grave)
@@ -130,6 +149,9 @@ function critter(set, type) {
     if (set === 'robots') {
       const n = type === 'q' ? 3 : 2;
       for (let i = 0; i < n; i++) tone(c, t + i * 0.1, 700 * k * (i % 2 ? 0.75 : 1), 0.08, 'square', 0.05);
+    } else if (set === 'clasicas') { // "toc" de pieza de madera
+      scratch(c, t, 0.05, 1800, 900, 0.25);
+      tone(c, t, 320 * k, 0.08, 'sine', 0.14, 220 * k);
     } else if (set === 'dinos') {
       if (type === 'p') tone(c, t, 900, 0.16, 'sine', 0.15, 1500);
       else { tone(c, t, 240 * k, 0.32, 'sawtooth', 0.07, 110 * k); scratch(c, t, 0.28, 700, 200, 0.18); }

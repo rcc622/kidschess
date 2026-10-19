@@ -216,6 +216,7 @@ h2 { font-size: var(--text-xl); text-align: center; }
 .seg button[aria-pressed="true"] { --fill: var(--color-hi); --stroke: 3.6px; }
 .seg.wrap { flex-wrap: wrap; }
 .seg.wrap button { flex: 1 1 28%; }
+.seg.wrap[data-opt="set"] button { flex-basis: 22%; }
 .qmark { font-family: var(--font-display); font-weight: 700; font-size: 40px; line-height: 44px; height: 44px; }
 .note { font-size: var(--text-sm); color: var(--color-pencil); min-height: 2.6em; line-height: 1.3; }
 /* casilla dibujada a pluma */
@@ -274,6 +275,13 @@ h2 { font-size: var(--text-xl); text-align: center; }
 .player.on .who > span { background: linear-gradient(176deg, transparent 32%, var(--color-hi) 32% 86%, transparent 86%); }
 .player.on .who svg { scale: 1.15; }
 .player .caps { display: flex; flex-wrap: wrap; justify-content: flex-end; }
+/* reloj del modo clásico */
+.player .clock { margin-right: auto; padding: 0 8px; border: 2.5px solid currentColor; border-radius: 9px 6px 10px 7px; font-family: var(--font-display); font-weight: 700; font-size: 22px; font-variant-numeric: tabular-nums; line-height: 1.3; }
+.player.on .clock { background: var(--color-hi); }
+.player .clock.low { color: var(--color-margin); }
+.player.on .clock.low { animation: tick 1s steps(2) infinite; }
+@keyframes tick { 50% { background: transparent; } }
+.clock-opt[hidden] { display: none; }
 .player .caps svg { width: 26px; height: 26px; margin-left: -7px; }
 .dots::after { content: ''; animation: dots 1.2s steps(4) infinite; }
 @keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
