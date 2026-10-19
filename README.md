@@ -68,7 +68,7 @@ y abrir http://localhost:5173. En `localhost` el service worker no se registra p
 
 - Reglas: chess.js de Jeff Hlywa (licencia BSD-2, incluida en el archivo).
 - Letras: Patrick Hand de Patrick Wagesreiter y Kalam de Indian Type Foundry (SIL OFL 1.1, ver `fonts/OFL-*.txt`).
-- Voz de Lápiz: voces neuronales de Microsoft (Dalia y Jorge, español de México) generadas con edge-tts.
+- Voz de Lápiz: Betty (mujer) y Antonio (hombre), voces de la biblioteca de ElevenLabs (modelo eleven_v4). Las frases y sus etiquetas de emoción están en `dev/voz-lineas.json`.
 - Voces de personajes y música Infantil: generadas con ElevenLabs.
 - Sistema de diseño: ver `design.md`.
 - Idea visual inspirada en *Ballpoint Gambit* (Kevin Ngo) y *Toadstool Chess*; todo el arte aquí es original, dibujado con código.
